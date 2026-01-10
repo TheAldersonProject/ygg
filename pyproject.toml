@@ -1,0 +1,14 @@
+[project]
+name = "ygg"
+version = "0.0.1"
+license = "MIT"
+license-files = ["LICENSE"]
+description = "Data tweaks."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.12.5",
+    "pyyaml==6.0.3",
+    "ruff>=0.14.10",
+    "structlog>=25.5.0",
+]
