@@ -1,0 +1,57 @@
+catalog: ygg
+schema: catalog
+entity: api_versions_element
+entity-type: table
+
+description: > 
+  Table normalization to manage different ODCS API versions.
+  This implementation extends the Open Data Contract Standard (ODCS) v3.1.0 for its physical implementation.
+authoritative_definitions:
+  - url: file://{_DOCS_FOLDER_}/ygg/catalog/api_version{_YGG_DOC_EXTENSION_}
+    type: Data Catalog Report
+    description: API Versions Data Catalog Report.
+    id: null
+  - url: https://github.com/bitol-io/open-data-contract-standard/releases/tag/v3.1.0
+    type: GITHUB
+    description: GitHub direct link to ODCS v3.1.0 Release.
+    id: null
+
+properties:
+
+  - logical_implementation:
+      property_name: api_version
+      required: true
+      alias: apiVersion
+      title: API Version
+      data_type: string
+      description: Open Data Contract Standard Version.
+      literal: null
+    physical_implementation:
+      column_name: api_version
+      description: Open Data Contract Standard Version.
+      required: true
+      data_type: string
+      size: 10
+      precision: null
+      constraints:
+        primary_key: true
+        primary_key_position: 1
+    examples:
+      - v3.1.0
+
+  - logical_implementation:
+      property_name: element
+      data_type: string
+      title: Element
+      description: Open Data Contract Standard Version using semantic versioning.
+      literal: null
+      required: true
+    physical_implementation:
+      column_name: version
+      description: Open Data Contract Standard Version using semantic versioning.
+      data_type: string
+      size: 10
+      precision: null
+      required: true
+    examples:
+      - "3.1.0"
