@@ -5,12 +5,11 @@ from typing import Type
 from pydantic import BaseModel
 from yaml import YAMLError
 
-from ygg.core.config import DATA_MODELS
-from ygg.core.data_model import YggDataModel
-from ygg.utils import logging
+from ygg.core.base_models import YggDataContract
+from ygg.utils import ygg_logs
 from ygg.utils.yaml_utils import get_yaml_content
 
-logs = logging.get_logger()
+logs = ygg_logs.get_logger()
 
 
 class YggParser:
@@ -53,26 +52,13 @@ class YggParser:
             raise ValueError("Data Model cannot be empty.")
 
         self._data_model = data_model
-        self._ygg_data_model: YggDataModel = YggDataModel(**data_model)
+        self._ygg_data_model: YggDataContract = YggDataContract(**data_model)
 
     @property
-    def ygg_data_model(self) -> YggDataModel:
+    def ygg_data_model(self) -> YggDataContract:
         """Returns the parsed Ygg Data Model."""
         return self._ygg_data_model
 
     def data_model_instance(self) -> Type[BaseModel]:
         """Returns the Pydantic model of the YggDataModel."""
         return self.ygg_data_model.logical_model_factory()
-
-
-if __name__ == "__main__":
-    file_full_path = f"{DATA_MODELS}/ygg/catalog/api_versions.yaml"
-    ym: YggDataModel = YggParser.load_data_model_from_file(file_path=file_full_path)
-    print(ym.ygg_data_model)
-    print(YggDataModel.model_json_schema())
-    dm = ym.data_model_instance()
-    xdt = {"apiVersion": "v3.1.0", "version": "3.1.0", "status": "active"}
-    x = dm(**xdt)
-    print(x)
-    print(dm.model_json_schema())
-    print("x")

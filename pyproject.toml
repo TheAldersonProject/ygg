@@ -1,14 +1,18 @@
 [project]
-name = "ygg"
+name = "Ygg"
 version = "0.0.1"
 license = "MIT"
 license-files = ["LICENSE"]
-description = "Data tweaks."
+description = "Dynamic data contracts based on the Open Data Contract Standards."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "glom>=25.12.0",
+    "ipykernel>=7.1.0",
+    "jsonref>=1.1.0",
     "pydantic>=2.12.5",
     "pyyaml==6.0.3",
+    "requests>=2.32.5",
     "ruff>=0.14.10",
     "structlog>=25.5.0",
 ]
