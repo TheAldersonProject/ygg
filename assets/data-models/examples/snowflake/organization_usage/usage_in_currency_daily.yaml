@@ -1,0 +1,341 @@
+fundamentals:
+  apiVersion: v3.1.0
+  kind: DataContract
+  id: dc-snowflake-organization-usage-usage-in-currency-daily
+  name: usage_in_currency_daily
+  tenant: snowflake
+  domain: organization_usage
+  version: 0.0.1
+  status: draft
+  tags:
+    - organization-usage
+    - usage-in-currency
+    - consumption-analysis
+  authoritativeDefinitions:
+    - url: file://docs/canonical/contracts/snowflake/organization-usage/usage-in-currency-daily
+      type: Canonical
+      description: Canonical documentation for the data contract.
+      id: docs/canonical/contracts/snowflake/organization-usage/usage-in-currency-daily
+  dataProduct: snowflake_platform_usage
+  description:
+    purpose: Snowflake platform usage in currency.
+    limitations: Data is aggregated by rating type and service type over day.
+    usage: Analyze usage in currency.
+    custom_properties: null
+  yggFlowType: transform
+servers:
+  - server: sf_snowflake_organization_usage
+    id: sf-snowflake-organization-usage
+    type: snowflake
+    description: Snowflake Organization Usage. Sets the configuration to connect to Snowflake Organization Usage Schema under the Snowflake database.
+    environment: general
+    database: snowflake
+    schema: organization_usage
+  - server: ddb_snowflake_organization_usage
+    id: ddb-snowflake-organization-usage
+    type: duckdb
+    description: Snowflake Organization Usage.
+    environment: production
+    database: snowflake
+    schema: organization_usage
+  - server: ddb_snowflake_organization_usage_analytics
+    id: snowflake-organization-usage-analytics
+    type: duckdb
+    description: Snowflake Organization Usage Analytics.
+    environment: production
+    database: snowflake
+    schema: organization_usage_analytics
+
+schema:
+  - id: snowflake-organization-usage-usage-in-currency-daily
+    name: UsageInCurrencyDaily
+    physicalName: usage_in_currency_daily
+    physicalType: view
+    description: The USAGE_IN_CURRENCY_DAILY view in the ORGANIZATION_USAGE schema can be used to return the daily credit usage and usage in currency for an organization.
+    businessName: Organization usage in currency daily
+    authoritativeDefinitions:
+      - url: https://docs.snowflake.com/en/sql-reference/organization-usage/usage_in_currency_daily
+        type: Canonical
+        description: Snowflake Usage in Currency Daily definition.
+        id: canonical/docs/snowflake/com/en/sql-reference/organization-usage/usage_in_currency_daily
+    tags:
+      - organization-usage
+      - value-in-currency
+      - daily-aggregated
+    yggFlowType: input
+    slaProperties:
+      - id: usage-date-latency
+        property: latency
+        value: 72
+        unit: h
+        element:
+          - usage_date
+        driver: operational
+        description: Until month close, data for a given day in a month can change to account for any end-of-month adjustments/credits, contract amendments, or Snowflake account transfers between organizations.
+      - id: usage-date-retention
+        property: retention
+        value: 5
+        unit: d
+        element:
+          - usage_date
+        driver: operational
+        description: Expires after the time period specified in the retention property.
+    dataGranularityDescription: Aggregation by Usage Date, Account Name, Rating Type, Service Type, and Currency.
+    server: sf_snowflake_organization_usage
+
+    properties:
+      - id: snowflake-organization-usage-usage-in-currency-daily-organization-name
+        name: organizationName
+        physicalName: organization_name
+        physicalType: varchar
+        description: Name of the organization.
+        businessName: Organization Name
+        customProperties:
+          - id: snowflake-organization-usage-usage-in-currency-daily-organization-name-synonyms
+            property: synonyms
+            value: ["orgName", "org", "organization", "org_name"]
+            description: Synonyms for field organization name.
+          - id: snowflake-organization-usage-usage-in-currency-daily-organization-name-alias
+            property: alias
+            value: org
+            description: Alias for field organization name.
+          - id: snowflake-organization-usage-usage-in-currency-daily-organization-name-label
+            property: label
+            value: Organization Name
+            description: Label for field organization name.
+        primaryKey: true
+        primaryKeyPosition: 1
+        logicalType: string
+        required: true
+        unique: false
+        partitioned: false
+        examples:
+          - COMPANY_XYZ
+        criticalDataElement: true
+      - id: snowflake-organization-usage-usage-in-currency-daily-contract-number
+        name: contractNumber
+        physicalName: contract_number
+        physicalType: varchar
+        description: Snowflake contract number for the organization.
+        businessName: Contract Number
+        primaryKey: true
+        primaryKeyPosition: 2
+        logicalType: string
+        required: true
+        unique: false
+        partitioned: false
+        examples:
+          - COMPANY_XYZ_CT_123456
+        criticalDataElement: true
+      - id: snowflake-organization-usage-usage-in-currency-daily-account-name
+        name: accountName
+        physicalName: account_name
+        physicalType: varchar
+        description: Name of the account where the usage was consumed.
+        businessName: Account Name
+        primaryKey: false
+        logicalType: string
+        required: true
+        unique: false
+        partitioned: false
+        examples:
+          - ACCOUNT_XYZ
+      - id: snowflake-organization-usage-usage-in-currency-daily-account-locator
+        name: accountLocator
+        physicalName: account_locator
+        physicalType: varchar
+        description: Locator for the account where the usage was consumed.
+        businessName: Account Locator
+        primaryKey: true
+        primaryKeyPosition: 3
+        logicalType: string
+        required: true
+        unique: false
+        partitioned: false
+        examples:
+          - ACCOUNT_XYZ
+      - id: snowflake-organization-usage-usage-in-currency-daily-region
+        name: region
+        physicalName: region
+        physicalType: varchar
+        description: Name of the region where the account is located.
+        businessName: Region
+        primaryKey: false
+        logicalType: string
+        required: true
+        unique: false
+        partitioned: false
+        examples:
+          - AWS_EU_CENTRAL_1
+          - AWS_US_EAST_1
+          - AWS_US_WEST_2
+      - id: snowflake-organization-usage-usage-in-currency-daily-service-level
+        name: serviceLevel
+        physicalName: service_level
+        physicalType: varchar
+        description: Service level (edition) of the Snowflake account (Standard, Enterprise, Business Critical, etc.).
+        businessName: Service Level
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - Enterprise
+          - Standard
+          - Business Critical
+      - id: snowflake-organization-usage-usage-in-currency-daily-usage-date
+        name: usageDate
+        physicalName: usage_date
+        physicalType: date
+        description: Date (in UTC format) in which the usage took place.
+        businessName: Usage Date
+        primaryKey: false
+        logicalType: date
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "2025-01-01"
+      - id: snowflake-organization-usage-usage-in-currency-daily-usage-type
+        name: usageType
+        physicalName: usage_type
+        physicalType: varchar
+        description: Corresponds to the Usage Category column in a billing statement, which exists for backward compatibility only. Use the BILLING_TYPE, RATING_TYPE, SERVICE_TYPE, and IS_ADJUSTMENT columns for billing reconciliation.
+        businessName: Usage Type
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+      - id: snowflake-organization-usage-usage-in-currency-daily-usage
+        name: usage
+        physicalName: usage
+        physicalType: NUMBER(38, 3)
+        description: Total amount of usage charged based on SERVICE_TYPE. The unit of the USAGE depends on the RATING_TYPE. For example, when the RATING_TYPE is compute, USAGE is measured in credits. When the RATING_TYPE is data transfer or storage, the usage is rated in terabytes.
+        businessName: Usage
+        primaryKey: false
+        logicalType: float
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "0.111"
+          - "22.889"
+      - id: snowflake-organization-usage-usage-in-currency-daily-currency
+        name: currency
+        physicalName: currency
+        physicalType: varchar
+        description: Currency of the usage.
+        businessName: Currency
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "USD"
+      - id: snowflake-organization-usage-usage-in-currency-daily-usage-in-currency
+        name: usageInCurrency
+        physicalName: usage_in_currency
+        physicalType: NUMBER(38, 2)
+        description: Total amount charged for the USAGE_TYPE for USAGE on the USAGE_DATE.
+        businessName: Usage in Currency
+        primaryKey: false
+        logicalType: float
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "0.11"
+          - "22.89"
+      - id: snowflake-organization-usage-usage-in-currency-balance-source
+        name: balanceSource
+        physicalName: balance_source
+        physicalType: varchar
+        description: Source of the funds used to pay for the daily usage.
+        businessName: Balance Source
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+        customProperties:
+          - id: snowflake-organization-usage-usage-in-currency-daily-balance-source-allowed-values
+            property: data-quality-allowed-values
+            value: [ "capacity", "rollover", "free usage", "overage", "rebate" ]
+            description: Allowed values for field balance source.
+        examples:
+          - "capacity"
+          - "rollover"
+          - "free usage"
+          - "overage"
+          - "rebate"
+      - id: snowflake-organization-usage-usage-in-currency-billing-type
+        name: billingType
+        physicalName: billing_type
+        physicalType: varchar
+        description: Indicates what is being charged or credited.
+        businessName: Billing Type
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "consumption"
+          - "rebate"
+          - "priority support"
+          - "vps_deployment_fee"
+          - "support_credit"
+      - id: snowflake-organization-usage-usage-in-currency-rating-type
+        name: ratingType
+        physicalName: rating_type
+        physicalType: varchar
+        description: Indicates how the usage in the record is rated, or priced.
+        businessName: Rating Type
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "compute"
+          - "data_transfer"
+          - "storage"
+          - "other"
+      - id: snowflake-organization-usage-usage-in-currency-service-type
+        name: serviceType
+        physicalName: service_type
+        physicalType: varchar
+        description: Type of usage.
+        businessName: Service Type
+        primaryKey: false
+        logicalType: string
+        required: false
+        unique: false
+        partitioned: false
+        examples:
+          - "WAREHOUSE_METERING"
+          - "STORAGE"
+          - "SNOWPIPE"
+          - "DATA_TRANSFER"
+      - id: snowflake-organization-usage-usage-in-currency-is-adjustment
+        name: isAdjustment
+        physicalName: is_adjustment
+        physicalType: boolean
+        description: Indicates whether the record is an adjustment to usage.
+        businessName: Is Adjustment
+        primaryKey: false
+        logicalType: boolean
+        required: false
+        unique: false
+        partitioned: false
+        customProperties:
+          - id: snowflake-organization-usage-usage-in-currency-daily-is-adjustment-allowed-values
+            property: data-quality-allowed-values
+            value: [ true, false ]
+            description: Allowed values for field is adjustment.
+        examples:
+          - "true"
+          - "false"
