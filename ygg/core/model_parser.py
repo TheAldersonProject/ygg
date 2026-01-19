@@ -5,7 +5,7 @@ from typing import Type
 from pydantic import BaseModel
 from yaml import YAMLError
 
-from ygg.core.base_models import YggDataContract
+from ygg.core.models import YggDataContract
 from ygg.utils import ygg_logs
 from ygg.utils.yaml_utils import get_yaml_content
 

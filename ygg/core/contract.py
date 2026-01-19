@@ -5,7 +5,7 @@ from typing import Any, Optional, Type
 from pydantic import BaseModel, Field, create_model
 
 from ygg.core import constants
-from ygg.core.base_models import YggBaseModel, YggDataContract, YggDataContractSchema
+from ygg.core.models import YggBaseModel, YggDataContract, YggDataContractSchema
 from ygg.utils import ygg_logs
 
 logs = ygg_logs.get_logger()

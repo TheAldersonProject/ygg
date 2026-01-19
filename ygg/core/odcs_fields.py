@@ -2,7 +2,7 @@
 
 from typing import Annotated, Optional, Union
 
-from pydantic import AnyUrl, BaseModel, Field
+from pydantic import BaseModel, Field
 
 TagsField = Annotated[
     Optional[list[str]],
@@ -25,7 +25,7 @@ StableId = Annotated[
 class CustomProperty(BaseModel):
     """Custom Property"""
 
-    id_: StableId = Field(default=None, alias="id")
+    id: StableId = Field(default=None, alias="id")
     property: str
     value: Union[str, float, int, bool, list, dict]
     description: Optional[str]
@@ -69,13 +69,13 @@ FullyQualifiedReferenceField = Annotated[
 class AuthoritativeDefinition(BaseModel):
     """Authoritative Definition."""
 
-    id_: str = Field(alias="id")
-    url: AnyUrl = Field(description="URL to the authority.")
+    id: str = Field(alias="id")
+    url: str = Field(description="URL to the authority.")
     type: str = Field(
         description="Type or category of the authority.",
         examples=["businessDefinition", "transformationImplementation", "videoTutorial", "tutorial", "implementation"],
     )
-    description: Optional[str] = Field(description="Description of the authoritative definition for humans.")
+    description: Optional[str] = Field(description="A list of type/link pairs for authoritative definitions.")
 
 
 AuthoritativeDefinitionField = Annotated[

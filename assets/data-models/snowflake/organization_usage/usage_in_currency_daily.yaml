@@ -1,0 +1,136 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: null
+name: usage_in_currency_daily
+version: null
+status: null
+tenant: snowflake
+tags:
+  - snowflake
+  - usage-control
+  - cost-control
+domain: organization_usage
+dataProduct: Snowflake Usage and Costs
+authoritativeDefinitions: null  # TODO: Could be a Ticket with the requirement.
+
+description:
+  purpose: Snowflake Data Model documentation to map the Usage in Currency Daily view.
+  limitations: Data is aggregated by day.
+  usage: Top level view to aggregate usage in currency for all services across all accounts in the organization.
+  authoritativeDefinitions: null
+
+servers:
+  - id: null
+    type: snowflake
+    description: Snowflake server
+    environment: production
+    roles: null
+    customProperties: null
+    host: xyz.snowflakecomputing.com
+    port: 443
+    account: xyz
+    database: snowflake
+    warehouse: snowflake_wh
+    schema: organization_usage
+
+roles:
+  - id: null
+    role: snowflake_organization_usage_reader
+    access: read
+    firstLevelApprovers: Data Integration Manager
+  - id: null
+    role: snowflake_organization_usage_writer
+    access: write
+    firstLevelApprovers: Data Integration Manager
+
+schema:
+
+  - id: null
+    name: usage_in_currency_daily
+    physicalName: usage_in_currency_daily
+    physicalType: view
+    businessName: Usage in Currency Daily
+
+    description: >
+      The USAGE_IN_CURRENCY_DAILY view in the ORGANIZATION_USAGE schema can be used to return the daily credit usage and usage in currency for an organization.
+
+    authoritativeDefinitions:
+      - url: https://docs.snowflake.com/en/sql-reference/organization-usage/usage_in_currency_daily
+        type: Canonical
+        description: Snowflake documentation for the organization_usage.usage_in_currency_daily view
+        id: null
+
+    tags:
+      - snowflake
+      - organization_usage
+      - usage_in_currency_daily
+
+    customProperties:
+      - id: null
+        property: flow-port-type
+        value: input
+        description: Defines the data contract as an input port.
+
+    dataGranularityDescription: "Aggregation on columns: USAGE_DATE."
+
+    properties:
+      - id: null
+        physicalName: USAGE_DATE
+        physicalType: date
+        primaryKey: true
+        primaryKeyPosition: 2
+        description: Date (in UTC format) in which the usage took place.
+        businessName: Usage Date
+        authoritativeDefinitions: null
+        quality: null # TODO: Implement
+        tags:
+          - entity-date-filter-column  # TODO: think of something better, this name is horrible.
+        customProperties:
+          - id: null
+            property: contract-filter-by-date-port
+            value: true
+            description: Defines the column to be used to filter by date in the flow.
+        logicalType: date
+        logicalTypeOptions: null
+        required: true
+        unique: false
+        partitioned: false
+        partitionKeyPosition: null
+        classification: null
+        encryptName: null
+        transformSourceObjects: null
+        transformLogic: null
+        transformDescription: null
+        examples:
+          - "2022-01-01"
+        criticalDataElement: false
+        items: false
+
+      - id: null
+        physicalName: ORGANIZATION_NAME
+        physicalType: varchar
+        primaryKey: true
+        primaryKeyPosition: 1
+        description: Name of the organization.
+        businessName: Organization Name
+        authoritativeDefinitions: null
+        quality: null # TODO: Implement
+        tags:
+          - snowflake-organization  # TODO: think of something better, this name is horrible.
+        customProperties: null
+        logicalType: string
+        logicalTypeOptions: null
+        required: true
+        unique: false
+        partitioned: false
+        partitionKeyPosition: null
+        classification: null
+        encryptName: null
+        transformSourceObjects: null
+        transformLogic: null
+        transformDescription: null
+        examples:
+          - "COMPANY-ORG-X"
+          - "JFK09291"
+        criticalDataElement: false
+        items: false
