@@ -78,14 +78,20 @@ CustomPropertyField = Annotated[
 class ObjectDescription(YggBaseModel):
     """Defines the Description object Data Model."""
 
-    purpose: str = Field(title="Purpose", description="Intended purpose for the provided data.")
+    purpose: str = Field(
+        title="Purpose", description="Intended purpose for the provided data."
+    )
     limitations: str = Field(
         title="limitations",
         description="Technical, compliance, and legal limitations for data use.",
     )
     usage: str = Field(title="Usage", description="Recommended usage of the data.")
-    authoritative_definitions: Optional[Union[list[AuthoritativeDefinition], AuthoritativeDefinition]] = Field(
-        title="Authoritative Definitions", default=None, alias="authoritativeDefinitions"
+    authoritative_definitions: Optional[
+        Union[list[AuthoritativeDefinition], AuthoritativeDefinition]
+    ] = Field(
+        title="Authoritative Definitions",
+        default=None,
+        alias="authoritativeDefinitions",
     )
     custom_properties: Optional[Union[list[CustomProperty], CustomProperty]] = Field(
         title="Custom Properties", default=None, alias="customProperties"

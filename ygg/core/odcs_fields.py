@@ -73,9 +73,17 @@ class AuthoritativeDefinition(BaseModel):
     url: str = Field(description="URL to the authority.")
     type: str = Field(
         description="Type or category of the authority.",
-        examples=["businessDefinition", "transformationImplementation", "videoTutorial", "tutorial", "implementation"],
+        examples=[
+            "businessDefinition",
+            "transformationImplementation",
+            "videoTutorial",
+            "tutorial",
+            "implementation",
+        ],
     )
-    description: Optional[str] = Field(description="A list of type/link pairs for authoritative definitions.")
+    description: Optional[str] = Field(
+        description="A list of type/link pairs for authoritative definitions."
+    )
 
 
 AuthoritativeDefinitionField = Annotated[

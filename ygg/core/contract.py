@@ -35,7 +35,9 @@ class DataContract(YggDataContract):
                     dtf = constants.DATA_TYPE_DEFINITIONS
                     logical_data_type = logical.data_type.strip().lower()
 
-                    python_data_type = dtf.get(logical_data_type, {}).get("logical_implementation", str)
+                    python_data_type = dtf.get(logical_data_type, {}).get(
+                        "logical_implementation", str
+                    )
 
                     if not logical.required:
                         python_data_type = Optional[python_data_type]
@@ -53,6 +55,8 @@ class DataContract(YggDataContract):
 
                     fields_definition[field_name] = (python_data_type, field_info)
 
-                model = create_model(model_name, __base__=base_class, **fields_definition)
+                model = create_model(
+                    model_name, __base__=base_class, **fields_definition
+                )
 
         return model

@@ -38,11 +38,15 @@ class YggParser:
 
         except FileNotFoundError:
             logs.error("File not found.", file_path=file_path)
-            raise ValueError("It was not possible to load the content due to file not found error.")
+            raise ValueError(
+                "It was not possible to load the content due to file not found error."
+            )
 
         except YAMLError as yml:
             logs.error("YAML error.", yml=yml)
-            raise ValueError(f"It was not possible to load the content due to YAML error: {yml}")
+            raise ValueError(
+                f"It was not possible to load the content due to YAML error: {yml}"
+            )
 
         return yaml_content
 

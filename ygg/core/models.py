@@ -30,24 +30,34 @@ class YggDataContractSchemaProperty(YggBaseModel):
 
     id: odcs_fields.StableId = Field(default=None, alias="id")
     physical_name: Optional[str] = Field(default=None, alias="physicalName")
-    physical_type: Optional[Union[enums.YggEntityType, str]] = Field(default=None, alias="physicalType")
+    physical_type: Optional[Union[enums.YggEntityType, str]] = Field(
+        default=None, alias="physicalType"
+    )
     description: Optional[str] = Field(default=None)
     business_name: Optional[str] = Field(default=None, alias="businessName")
-    authoritative_definitions: AuthoritativeDefinitionField = Field(alias="authoritativeDefinitions")
+    authoritative_definitions: AuthoritativeDefinitionField = Field(
+        alias="authoritativeDefinitions"
+    )
     tags: odcs_fields.TagsField
     custom_properties: odcs_fields.CustomPropertiesField = Field(default=None)
 
     property_name: str = Field(min_length=5, alias="name")
     primary_key: Optional[bool] = Field(default=False, alias="primaryKey")
     primary_key_position: Optional[int] = Field(default=None, alias="primaryKey")
-    logical_type: Optional[enums.YggLogicalDataTypes] = Field(default=None, alias="logicalType")
+    logical_type: Optional[enums.YggLogicalDataTypes] = Field(
+        default=None, alias="logicalType"
+    )
     is_required: Optional[bool] = Field(default=False, alias="required")
     is_unique: Optional[bool] = Field(default=False, alias="unique")
     is_partitioned: Optional[bool] = Field(default=False, alias="partitioned")
-    partition_key_position: Optional[int] = Field(default=None, alias="partitionKeyPosition")
+    partition_key_position: Optional[int] = Field(
+        default=None, alias="partitionKeyPosition"
+    )
     classification: Optional[str] = Field(default=None)
     encrypted_name: Optional[str] = Field(default=None, alias="encryptedName")
-    critical_data_element: Optional[bool] = Field(default=False, alias="criticalDataElement")
+    critical_data_element: Optional[bool] = Field(
+        default=False, alias="criticalDataElement"
+    )
     examples: Optional[list[str]] = Field(default=None)
 
 
@@ -63,7 +73,9 @@ class YggDataContractServiceLevelAgreement(YggBaseModel):
     description: Optional[str] = Field(default=None)
 
 
-class YggDataContractServiceLevelAgreementContract(YggDataContractServiceLevelAgreement):
+class YggDataContractServiceLevelAgreementContract(
+    YggDataContractServiceLevelAgreement
+):
     """Service Level Agreement for Data Contract (SLA)."""
 
     TABLE_NAME: ClassVar[str] = "contract_sla"
@@ -87,8 +99,12 @@ class YggDataContractServer(YggBaseModel):
     description: Optional[str] = Field(default=None)
     environment: enums.YggDataContractServerEnvironment
     custom_properties: odcs_fields.CustomPropertiesField = Field(default=None)
-    database_name: odcs_fields.StableId = Field(alias="database", description="Name of the database.")
-    database_schema: odcs_fields.StableId = Field(alias="schema", description="Name of the schema in the database.")
+    database_name: odcs_fields.StableId = Field(
+        alias="database", description="Name of the database."
+    )
+    database_schema: odcs_fields.StableId = Field(
+        alias="schema", description="Name of the schema in the database."
+    )
 
 
 class YggDataContractSchema(YggBaseModel):
@@ -98,16 +114,24 @@ class YggDataContractSchema(YggBaseModel):
 
     id: odcs_fields.StableId = Field(default=None, alias="id")
     physical_name: Optional[str] = Field(default=None, alias="physicalName")
-    physical_type: Optional[Union[enums.YggEntityType, str]] = Field(default=None, alias="physicalType")
+    physical_type: Optional[Union[enums.YggEntityType, str]] = Field(
+        default=None, alias="physicalType"
+    )
     description: Optional[str] = Field(default=None)
     business_name: Optional[str] = Field(default=None, alias="businessName")
-    authoritative_definitions: AuthoritativeDefinitionField = Field(alias="authoritativeDefinitions")
+    authoritative_definitions: AuthoritativeDefinitionField = Field(
+        alias="authoritativeDefinitions"
+    )
     tags: odcs_fields.TagsField
     custom_properties: odcs_fields.CustomPropertiesField = Field(default=None)
 
     schema_name: str = Field(min_length=5, alias="name")
-    data_granularity_description: Optional[str] = Field(default=None, alias="dataGranularityDescription")
-    ygg_flow_type: Optional[enums.YggDataContractGeneralFlowType] = Field(default=None, alias="yggFlowType")
+    data_granularity_description: Optional[str] = Field(
+        default=None, alias="dataGranularityDescription"
+    )
+    ygg_flow_type: Optional[enums.YggDataContractGeneralFlowType] = Field(
+        default=None, alias="yggFlowType"
+    )
     sla_properties: Optional[list[YggDataContractServiceLevelAgreementSchema]] = Field(
         default=None, alias="slaProperties"
     )
@@ -121,20 +145,34 @@ class YggDataContractFundamentals(YggBaseModel):
     TABLE_NAME: ClassVar[str] = "contract"
     ODCS_NODE: ClassVar[str] = "properties"
 
-    api_version: Optional[Literal["v3.1.0"]] = Field(alias="apiVersion", default="v3.1.0")
+    api_version: Optional[Literal["v3.1.0"]] = Field(
+        alias="apiVersion", default="v3.1.0"
+    )
     kind: Literal["DataContract"] = Field(default="DataContract")
     id: odcs_fields.StableId = Field(default=None, alias="id")
-    contract_name: odcs_fields.StableId = Field(default=None, max_length=255, alias="name")
+    contract_name: odcs_fields.StableId = Field(
+        default=None, max_length=255, alias="name"
+    )
     tenant: odcs_fields.StableId = Field(default=None, max_length=64)
-    contract_domain: odcs_fields.StableId = Field(default=None, max_length=64, alias="domain")
-    contract_version: Optional[odcs_fields.SemanticalVersionField] = Field(default="0.0.1", alias="version")
-    status: Optional[enums.YggDataContractStatus] = Field(default=enums.YggDataContractStatus.DRAFT)
+    contract_domain: odcs_fields.StableId = Field(
+        default=None, max_length=64, alias="domain"
+    )
+    contract_version: Optional[odcs_fields.SemanticalVersionField] = Field(
+        default="0.0.1", alias="version"
+    )
+    status: Optional[enums.YggDataContractStatus] = Field(
+        default=enums.YggDataContractStatus.DRAFT
+    )
     tags: odcs_fields.TagsField
     data_product: str = Field(alias="dataProduct", max_length=255)
 
-    authoritative_definitions: AuthoritativeDefinitionField = Field(alias="authoritativeDefinitions")
+    authoritative_definitions: AuthoritativeDefinitionField = Field(
+        alias="authoritativeDefinitions"
+    )
     description: dict = Field(title="Description")
-    ygg_flow_type: enums.YggDataContractGeneralFlowType = Field(alias="yggFlowType", description="General flow type.")
+    ygg_flow_type: enums.YggDataContractGeneralFlowType = Field(
+        alias="yggFlowType", description="General flow type."
+    )
     version_ts: Optional[datetime] = Field(default=None, alias="versionTs")
 
 
@@ -146,7 +184,9 @@ class YggDataContract(YggBaseModel):
     fundamentals: YggDataContractFundamentals
     contract_schema: list[YggDataContractSchema] = Field(alias="schema")
     servers: Optional[list[YggDataContractServer]] = Field(default=None)
-    sla_properties: Optional[YggDataContractServiceLevelAgreementContract] = Field(default=None, alias="slaProperties")
+    sla_properties: Optional[YggDataContractServiceLevelAgreementContract] = Field(
+        default=None, alias="slaProperties"
+    )
 
 
 if __name__ == "__main__":

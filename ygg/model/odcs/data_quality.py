@@ -16,7 +16,9 @@ class DataQuality(YggBaseModel):
     description: Optional[str] = Field(default=None)
     type: Optional[str] = Field(default=None)
     metric: Optional[str] = Field(default=None)
-    rule: Optional[str] = Field(default=None, deprecated="This column has been deprecated. Use metric instead")
+    rule: Optional[str] = Field(
+        default=None, deprecated="This column has been deprecated. Use metric instead"
+    )
     arguments: Optional[dict[str, Any]] = Field(default=None)
 
     unit: Optional[str] = Field(default=None)
@@ -39,5 +41,9 @@ class DataQuality(YggBaseModel):
     mustBeGreaterOrEqualTo: Optional[Union[float, int]] = Field(default=None)
     mustBeLessThan: Optional[Union[float, int]] = Field(default=None)
     mustBeLessOrEqualTo: Optional[Union[float, int]] = Field(default=None)
-    mustBeBetween: Optional[list[Union[float, int]]] = Field(default=None, max_length=2, min_length=2)
-    mustNotBeBetween: Optional[list[Union[float, int]]] = Field(default=None, max_length=2, min_length=2)
+    mustBeBetween: Optional[list[Union[float, int]]] = Field(
+        default=None, max_length=2, min_length=2
+    )
+    mustNotBeBetween: Optional[list[Union[float, int]]] = Field(
+        default=None, max_length=2, min_length=2
+    )
