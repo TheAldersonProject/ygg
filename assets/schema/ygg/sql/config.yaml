@@ -1,0 +1,8 @@
+order:
+  - db-level/schema.sql
+  - tables/contract.sql
+  - tables/contract_schema.sql
+  - tables/contract_schema_property.sql
+  - tables/contract_server.sql
+  - tables/contract_sla.sql
+  - tables/contract_schema_sla.sql

@@ -30,7 +30,7 @@ exclude = [
 
 
 # Same as Black.
-line-length = 100
+line-length = 120
 indent-width = 4
 
 [lint]
@@ -72,4 +72,4 @@ docstring-code-format = true
 #
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
-docstring-code-line-length = 60
+docstring-code-line-length = 72

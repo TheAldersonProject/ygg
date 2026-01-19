@@ -1,12 +1,17 @@
 [project]
-name = "ygg"
+name = "Ygg"
 version = "0.0.1"
 license = "MIT"
 license-files = ["LICENSE"]
-description = "Data tweaks."
+description = "Implements dynamic data contracts based on the Open Data Contract Standards."
 readme = "README.md"
+authors = [
+  {name = "Thiago Dias", email = "thiago@yggdrasil.codes"}
+]
 requires-python = ">=3.10"
 dependencies = [
+    "duckdb>=1.4.3",
+    "glom>=25.12.0",
     "pydantic>=2.12.5",
     "pyyaml==6.0.3",
     "ruff>=0.14.10",
