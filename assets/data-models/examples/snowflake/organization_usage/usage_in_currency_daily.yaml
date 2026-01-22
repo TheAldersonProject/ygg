@@ -2,10 +2,10 @@ fundamentals:
   apiVersion: v3.1.0
   kind: DataContract
   id: dc-snowflake-organization-usage-usage-in-currency-daily
+  version: 0.0.1
   name: usage_in_currency_daily
   tenant: snowflake
   domain: organization_usage
-  version: 0.0.1
   status: draft
   tags:
     - organization-usage
@@ -21,7 +21,6 @@ fundamentals:
     purpose: Snowflake platform usage in currency.
     limitations: Data is aggregated by rating type and service type over day.
     usage: Analyze usage in currency.
-    custom_properties: null
   yggFlowType: transform
 servers:
   - server: sf_snowflake_organization_usage

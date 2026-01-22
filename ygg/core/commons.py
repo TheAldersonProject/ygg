@@ -1,6 +1,18 @@
 """Collection of enums for Ygg."""
-
+from datetime import datetime
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class YggBaseModel(BaseModel):
+    """Base data-models for Ygg data models."""
+
+    model_config = ConfigDict(use_enum_values=True)
+    record_create_ts: Optional[datetime] = Field(default=None, frozen=True)
+    record_update_ts: Optional[datetime] = Field(default=None, frozen=True)
+
 
 
 class YggEntityType(Enum):

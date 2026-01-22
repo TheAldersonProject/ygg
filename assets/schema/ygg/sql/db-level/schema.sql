@@ -1,2 +1,2 @@
 -- creates the data_contracts schema
-create if not exists data_contracts;
+create schema if not exists data_contracts;
