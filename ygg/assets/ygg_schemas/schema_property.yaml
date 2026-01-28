@@ -1,5 +1,5 @@
 name: SchemaProperty
-document_path: ""
+document_path: "properties"
 type: object
 required: true
 entity_name: contract_schema_property

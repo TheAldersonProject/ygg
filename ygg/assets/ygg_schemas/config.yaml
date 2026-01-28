@@ -19,7 +19,7 @@ commons:
   - name: record_creation_ts
     type: timestamp
     description: Timestamp of the creation of the record.
-    alias: recordTimestamp
+    alias: recordCreationTs
     required: false
     primary_key: false
     unique: false

@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from enum import Enum
-from typing import Annotated, Any, Literal, Optional, Type
+from typing import Annotated, Any, Literal, Optional, Type, Union
 
 from glom import glom
 from pydantic import BaseModel, ConfigDict, Field, create_model
@@ -11,6 +11,7 @@ import ygg.config as constants
 import ygg.utils.files_utils as file_utils
 import ygg.utils.ygg_logs as log_utils
 from ygg.helpers.data_types import get_data_type
+from ygg.helpers.shared_model_mixin import SharedModelMixin
 
 logs = log_utils.get_logger()
 
@@ -47,6 +48,7 @@ class ModelProperty(YggBaseModel):
     enum: list | None = Field(default=None)
     odcs_schema: str | None = Field(default=None)
     skip_from_signature: bool = Field(default=False)
+    skip_from_physical_model: bool = Field(default=False)
     examples: list[str] | None = Field(default=None)
 
 
@@ -95,7 +97,7 @@ class DynamicModelFactory:
         self._odcs_schema: dict | None = None
 
         self._model_settings: ModelSettings | None = None
-        self._model_instance: Type[YggBaseModel] | None = None
+        self._model_instance: Type[SharedModelMixin] | None = None
 
         self._load_models_configuration()
         self._load_odcs_schema()
@@ -103,13 +105,19 @@ class DynamicModelFactory:
         self._create_model_instance()
 
     @property
-    def instance(self) -> Type[YggBaseModel]:
+    def instance(self) -> Type[Union[YggBaseModel, SharedModelMixin]]:
         """Get the model instance."""
 
         return self._model_instance
 
+    @property
+    def settings(self) -> ModelSettings:
+        """Get the model settings."""
+
+        return self._model_settings
+
     @staticmethod
-    def get_logical_data_type(data_type: str) -> dict:
+    def _get_logical_data_type(data_type: str) -> dict:
         """Get the logical data type."""
 
         dtype: dict = get_data_type(data_type, "logical")
@@ -190,7 +198,7 @@ class DynamicModelFactory:
             if prop.enum and isinstance(prop.enum, list):
                 logical_type_ = Literal[tuple(prop.enum)]  # type: ignore
             else:
-                logical_type_ = DynamicModelFactory.get_logical_data_type(prop.type)["type"]
+                logical_type_ = DynamicModelFactory._get_logical_data_type(prop.type)["type"]
 
             if prop.required and not prop.default:
                 prop.default = ...
@@ -208,7 +216,7 @@ class DynamicModelFactory:
         instance = create_model(
             self._model_settings.name,
             __config__=ConfigDict(title=self._model_settings.description),
-            __base__=YggBaseModel,
+            __base__=(YggBaseModel, SharedModelMixin),
             **fields_map_,
         )
 
@@ -222,26 +230,3 @@ class DynamicModelFactory:
         tools = PhysicalModelTools(self._model_settings)
         tools.create_schema()
         tools.create_table(recreate_existing=recreate_existing)
-
-
-if __name__ == "__main__":
-    c = file_utils.get_yaml_content(
-        "/Users/thiagodias/Tad/projects/tyr/ygg/dev/assets/data-models/examples/snowflake/organization_usage/usage_in_currency_daily.yaml"
-    )
-
-    dyc = DynamicModelFactory(model=Model.CONTRACT)
-    print(dyc.instance(**c["contract"]))
-
-    dyc.get_create_table_ddl(recreate_existing=True)
-    # print(d)
-
-    # dys = DynamicModelFactory(model=Model.SERVERS)
-    # for s in c["servers"]:
-    #     print(dys.instance(**s))
-    #
-    # dysc = DynamicModelFactory(model=Model.SCHEMA)
-    # dyscp = DynamicModelFactory(model=Model.SCHEMA_PROPERTY)
-    # for s in c["schema"]:
-    #     print(dysc.instance(**s))
-    #     for sp in s["properties"]:
-    #         print(dyscp.instance(**sp))
