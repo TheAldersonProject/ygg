@@ -1,0 +1,60 @@
+name: Contract
+document_path: contract
+type: object
+required: true
+entity_name: contract
+entity_type: table
+entity_schema: data_contracts
+description: This section contains general information about the contract. Fundamentals were also called demographics in early versions of ODCS.
+odcs_reference: "https://bitol-io.github.io/open-data-contract-standard/v3.1.0/fundamentals"
+properties:
+  - name: api_version
+    odcs_schema: properties.apiVersion
+    enum: ["v3.1.0"]
+  - name: kind
+    odcs_schema: properties.kind
+  - name: id
+    alias: id
+    odcs_schema: properties.id
+    type: StableId
+    primary_key: true
+  - name: name
+    odcs_schema: properties.name
+    type: StructuredName
+    primary_key: true
+  - name: version
+    type: SemanticalVersion
+    odcs_schema: properties.version
+    skip_from_signature: True
+    default: "0.1.0"
+  - name: status
+    enum: [ "draft", "active", "deprecated" ]
+    odcs_schema: properties.status
+    skip_from_signature: true
+    default: draft
+  - name: tenant
+    type: StructuredName
+    odcs_schema: properties.tenant
+    primary_key: true
+  - name: tags
+    required: false
+    type: Tags
+    odcs_schema: "$defs.Tags"
+    alias: tags
+  - name: domain
+    type: StructuredName
+    odcs_schema: properties.domain
+    primary_key: true
+  - name: data_product
+    type: StructuredName
+    alias: dataProduct
+    required: false
+    odcs_schema: properties.dataProduct
+  - name: authoritative_definitions
+    type: AuthoritativeDefinitions
+    alias: authoritativeDefinitions
+    required: false
+    odcs_schema: "$defs.AuthoritativeDefinitions"
+  - name: description
+    type: StructuredDescription
+    odcs_schema: properties.description

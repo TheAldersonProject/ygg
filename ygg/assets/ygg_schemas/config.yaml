@@ -1,0 +1,38 @@
+version_file: "VERSION.txt"
+odcs_version: "v3.1.0"
+odcs_schema_file: "odcs-json-schema-v3.1.0.json"
+models:
+  - contract
+  - servers
+  - schema
+  - schema_property
+
+commons:
+  - name: record_hash
+    type: string
+    description: Record hash will be created while inserting. It ignores specific values to create the hash.
+    alias: recordHash
+    required: false
+    primary_key: true
+    unique: false
+    skip_from_signature: true
+  - name: record_creation_ts
+    type: timestamp
+    description: Timestamp of the creation of the record.
+    alias: recordTimestamp
+    required: false
+    primary_key: false
+    unique: false
+    skip_from_signature: true
+    default: None
+    physical_default_function: "get_current_timestamp()"
+  - name: record_status_ts
+    type: timestamp
+    description: Timestamp of the status change of the record.
+    alias: recordStatusTs
+    required: false
+    primary_key: false
+    unique: false
+    skip_from_signature: true
+    default: null
+    physical_default_function: "get_current_timestamp()"

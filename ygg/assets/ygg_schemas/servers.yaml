@@ -1,0 +1,46 @@
+name: Servers
+document_path: servers
+type: object
+required: false
+entity_name: contract_server
+entity_type: table
+entity_schema: data_contracts
+description: The servers element describes where the data protected by this data contract is physically located.
+odcs_reference: "https://bitol-io.github.io/open-data-contract-standard/v3.1.0/infrastructure-servers/"
+properties:
+  - name: server
+    odcs_schema: "$defs.Server.properties.server"
+  - name: id
+    odcs_schema: "$defs.StableId"
+    alias: id
+    type: StableId
+    primary_key: true
+  - name: type
+    enum: [ "snowflake", "duckdb", "postgresql", "file" ]
+    odcs_schema: "$defs.Server.properties.type"
+  - name: description
+    odcs_schema: "$defs.Server.properties.description"
+    type: string
+  - name: environment
+    enum: [ "production", "staging", "development", "testing", "qa", "local", "general" ]
+    odcs_schema: "$defs.Server.properties.environment"
+  - name: database_name
+    type: StructuredName
+    description: Database Name.
+    alias: databaseName
+    required: false
+  - name: database_schema
+    type: StructuredName
+    description: Schema Name.
+    alias: schemaName
+    required: false
+  - name: contract_id
+    type: StableId
+    description: Contract Id.
+    alias: contractId
+    required: false
+  - name: contract_record_hash
+    type: string
+    description: Contract Record Hash.
+    alias: contractRecordHash
+    required: false
