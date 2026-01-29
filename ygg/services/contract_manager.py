@@ -1,21 +1,24 @@
 """Contract Management Service."""
 
+from pathlib import Path
 from typing import Type, Union
 
 from glom import glom
 
 import ygg.utils.files_utils as file_utils
+from ygg import config
 from ygg.core.dynamic_models_factory import DynamicModelFactory, Model, YggBaseModel
+from ygg.core.ygg_factory import YggFactory
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.services.physical_model_tools import PhysicalModelTools
 
 
-class ContractManagementService:
+class ContractManagerService:
     """
     Service for managing contracts and related data.
     """
 
-    def __init__(self, recreate_existing: bool = False, contract_data: dict | None = None):
+    def __init__(self, recreate_existing: bool = False, contract_data: dict | None = None, db_url: str | None = None):
         """Initialize the Contract Management Service."""
 
         self._contract: DynamicModelFactory = DynamicModelFactory(model=Model.CONTRACT)
@@ -24,9 +27,26 @@ class ContractManagementService:
         self._schema_property: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA_PROPERTY)
 
         self._contract_data: dict | None = contract_data
+
+        self._db_url: str | Path = db_url or config.DATABASE_FOLDER / "db.duckdb"
+
+        self._contract_id: str | None = None
+        self._contract_version: str | None = None
+
         self._create_if_not_exists(recreate_existing=recreate_existing)
 
-    def database_persist(self) -> None:
+    def build_contract(self) -> None:
+        """Build the contract by creating and populating the necessary models."""
+
+        self._database_persist()
+        factory = YggFactory(
+            contract_id=self._contract_id,
+            contract_version=self._contract_version,
+            db_url=self._db_url,
+        )
+        factory.build_ygg_contract()
+
+    def _database_persist(self) -> None:
         """Save the contract data to the database."""
 
         if self._contract_data is None:
@@ -46,14 +66,18 @@ class ContractManagementService:
                 data = [data]
 
             def save(dt_, model_):
-                tools_ = PhysicalModelTools(model=model_.settings)
+                tools_ = PhysicalModelTools(model=model_.settings, db_path=self._db_url)
                 entity: Type[Union[YggBaseModel, SharedModelMixin]] = model_.instance
                 entity = entity.inflate(data=dt_, model_hydrate=model_hydrate)
 
                 model_hydrate__ = tools_.insert_data(
                     entity=entity,
-                    on_conflict_ignore=True,
+                    on_conflict_ignore=False,
                 )
+
+                if model_ is self._contract:
+                    self._contract_id = entity.id  # type: ignore
+                    self._contract_version = entity.version  # type: ignore
 
                 return model_hydrate__
 
@@ -77,15 +101,15 @@ class ContractManagementService:
 
         models_list = [self._contract, self._servers, self._schema, self._schema_property]
         for model in models_list:
-            tools = PhysicalModelTools(model=model.settings)
+            tools = PhysicalModelTools(model=model.settings, db_path=self._db_url)
             tools.create_schema()
             tools.create_table(recreate_existing=recreate_existing)
 
 
 if __name__ == "__main__":
     c = file_utils.get_yaml_content(
-        "/Users/thiagodias/Tad/projects/tyr/ygg/dev/assets/data-models/examples/snowflake/organization_usage/usage_in_currency_daily.yaml"
+        "/Users/thiagodias/Tad/projects/tyr/ygg/data/contracts/snowflake/organization_usage/usage_in_currency_daily.yaml"
     )
 
-    m = ContractManagementService(recreate_existing=False, contract_data=c)
-    m.database_persist()
+    m = ContractManagerService(recreate_existing=True, contract_data=c)
+    m.build_contract()

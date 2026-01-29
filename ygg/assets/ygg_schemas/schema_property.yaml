@@ -41,7 +41,6 @@ properties:
     odcs_schema: "$defs.SchemaBaseProperty.properties.primaryKeyPosition"
     required: false
     type: integer
-    default: -1
   - name: logical_type
     odcs_schema: "$defs.SchemaBaseProperty.properties.logicalType"
     enum: ["string","date","timestamp","time","number","integer","object","array","boolean","float",]

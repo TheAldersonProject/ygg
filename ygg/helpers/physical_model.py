@@ -34,7 +34,6 @@ class PhysicalModelHelper:
             raise ValueError("Ygg Model Cannot be Empty.")
 
         self._model: ModelSettings = model
-
         logs.debug("Physical Model Tools Initialized.", model=self._model.name)
 
     def get_create_schema_ddl(self) -> str:
@@ -82,9 +81,11 @@ class PhysicalModelHelper:
             field_default_value_: Any = None,
             physical_default_function_: Any = None,
         ):
-            if field_type_.upper() in ("TIMESTAMP", "TIMESTAMPTZ", "TIMESTAMP_LTZ"):
+            if field_type_.upper() in ("TIMESTAMP", "TIMESTAMPTZ", "TIMESTAMP_LTZ", "BIGINT", "INTEGER"):
                 if physical_default_function_:
                     field_default_value_ = f" DEFAULT {physical_default_function_}"
+                elif field_default_value_:
+                    field_default_value_ = f" DEFAULT {field_default_value_}"
 
             elif field_default_value_ is not None and not field_default_value_ == ...:
                 if field_type_.upper() not in ("BOOL", "BOOLEAN"):

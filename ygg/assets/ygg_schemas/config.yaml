@@ -14,20 +14,20 @@ commons:
     alias: recordHash
     required: false
     primary_key: true
-    unique: false
+    unique: true
     skip_from_signature: true
   - name: record_creation_ts
-    type: timestamp
+    type: integer
     description: Timestamp of the creation of the record.
     alias: recordCreationTs
     required: false
     primary_key: false
     unique: false
     skip_from_signature: true
-    default: None
-    physical_default_function: "get_current_timestamp()"
+    default: null
+    physical_default_function: "epoch_ns(get_current_timestamp())"
   - name: record_status_ts
-    type: timestamp
+    type: integer
     description: Timestamp of the status change of the record.
     alias: recordStatusTs
     required: false
@@ -35,4 +35,4 @@ commons:
     unique: false
     skip_from_signature: true
     default: null
-    physical_default_function: "get_current_timestamp()"
+    physical_default_function: "epoch_ns(get_current_timestamp())"

@@ -98,17 +98,24 @@ class DynamicModelFactory:
 
         self._model_settings: ModelSettings | None = None
         self._model_instance: Type[SharedModelMixin] | None = None
+        self._model_read_instance: Type[SharedModelMixin] | None = None
 
         self._load_models_configuration()
         self._load_odcs_schema()
         self._load_model_settings()
-        self._create_model_instance()
+        self._create_model_write_instance()
 
     @property
     def instance(self) -> Type[Union[YggBaseModel, SharedModelMixin]]:
         """Get the model instance."""
 
         return self._model_instance
+
+    @property
+    def read_instance(self) -> Type[Union[YggBaseModel, SharedModelMixin]]:
+        """Get the model instance."""
+
+        return self._model_read_instance
 
     @property
     def settings(self) -> ModelSettings:
@@ -177,11 +184,12 @@ class DynamicModelFactory:
 
         self._model_settings = model_settings
 
-    def _create_model_instance(self) -> None:
+    def _create_model_write_instance(self) -> None:
         """Get the model instance."""
 
         logs.info("Creating Model Instance.", model=self._model_settings.name)
         fields_map_: dict[str, Any] = defaultdict(dict)
+        read_fields_map_: dict[str, Any] = defaultdict(dict)
 
         for prop in self._model_settings.properties:
             if prop.odcs_schema:
@@ -212,6 +220,9 @@ class DynamicModelFactory:
             )
 
             fields_map_[prop.name] = Annotated[logical_type_ if prop.required else Optional[logical_type_], field_]
+            read_fields_map_[prop.alias or prop.name] = Annotated[
+                Optional[logical_type_], Field(default=None, alias=prop.name.upper())
+            ]
 
         instance = create_model(
             self._model_settings.name,
@@ -220,8 +231,17 @@ class DynamicModelFactory:
             **fields_map_,
         )
 
-        logs.debug("Instance Created.", instance=instance.__name__)
+        read_instance = create_model(
+            f"{self._model_settings.name}Read",
+            __base__=(YggBaseModel, SharedModelMixin),
+            **read_fields_map_,
+        )
+
         self._model_instance = instance
+        self._model_read_instance = read_instance
+
+        logs.debug("Instance Created.", instance=instance.__name__)
+        logs.debug("Read Instance Created.", instance=read_instance.__name__)
 
     def get_create_table_ddl(self, recreate_existing: bool = False) -> None:
         """Create a table statement."""
