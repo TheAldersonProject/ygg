@@ -11,6 +11,9 @@ from ygg.core.dynamic_models_factory import DynamicModelFactory, Model, YggBaseM
 from ygg.core.ygg_factory import YggFactory
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.services.physical_model_tools import PhysicalModelTools
+from ygg.utils.ygg_logs import get_logger
+
+logs = get_logger()
 
 
 class ContractManagerService:
@@ -18,7 +21,9 @@ class ContractManagerService:
     Service for managing contracts and related data.
     """
 
-    def __init__(self, recreate_existing: bool = False, contract_data: dict | None = None, db_url: str | None = None):
+    def __init__(
+        self, recreate_existing: bool = False, contract_data: dict | str | None = None, db_url: str | None = None
+    ):
         """Initialize the Contract Management Service."""
 
         self._contract: DynamicModelFactory = DynamicModelFactory(model=Model.CONTRACT)
@@ -26,14 +31,30 @@ class ContractManagerService:
         self._schema: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA)
         self._schema_property: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA_PROPERTY)
 
-        self._contract_data: dict | None = contract_data
+        self._contract_data: dict | str | None = contract_data
 
         self._db_url: str | Path = db_url or config.DATABASE_FOLDER / "db.duckdb"
 
         self._contract_id: str | None = None
         self._contract_version: str | None = None
 
+        self._get_contract_data()
         self._create_if_not_exists(recreate_existing=recreate_existing)
+
+    def _get_contract_data(self) -> dict:
+        """Get the contract data."""
+        logs.debug("File path", path=self._contract_data)
+
+        if isinstance(self._contract_data, dict):
+            data = self._contract_data
+
+        else:
+            data = file_utils.get_yaml_content(self._contract_data)
+            if not isinstance(data, dict):
+                raise ValueError("Contract data is not a dictionary.")
+
+        logs.debug("Contract Data Loaded.", data=data)
+        self._contract_data = data
 
     def build_contract(self) -> None:
         """Build the contract by creating and populating the necessary models."""
@@ -107,9 +128,7 @@ class ContractManagerService:
 
 
 if __name__ == "__main__":
-    c = file_utils.get_yaml_content(
-        "/Users/thiagodias/Tad/projects/tyr/ygg/data/contracts/snowflake/organization_usage/usage_in_currency_daily.yaml"
-    )
+    c = file_utils.get_yaml_content("/data/contracts/snowflake/organization_usage/input.yaml")
 
     m = ContractManagerService(recreate_existing=True, contract_data=c)
     m.build_contract()

@@ -242,11 +242,3 @@ class DynamicModelFactory:
 
         logs.debug("Instance Created.", instance=instance.__name__)
         logs.debug("Read Instance Created.", instance=read_instance.__name__)
-
-    def get_create_table_ddl(self, recreate_existing: bool = False) -> None:
-        """Create a table statement."""
-        from ygg.services.physical_model_tools import PhysicalModelTools
-
-        tools = PhysicalModelTools(self._model_settings)
-        tools.create_schema()
-        tools.create_table(recreate_existing=recreate_existing)
