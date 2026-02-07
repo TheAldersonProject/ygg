@@ -3,7 +3,8 @@
 This module provides a factory class for creating Ygg objects based on configuration data.
 """
 
-import ygg.config as configs
+from pathlib import Path
+
 from ygg.helpers.duck_db import DuckDbHelper
 from ygg.helpers.ygg_models import TargetContractMap
 from ygg.services.physical_model_tools import PhysicalModelTools
@@ -74,8 +75,8 @@ class YggFactory:
                 select  physical_name as "name", description as "description", primary_key as "is_key",
                         is_unique as "is_unique", is_required as "is_required", physical_type as "physical_type",
                         ID as "id", record_hash as "record_hash", contract_schema_id as "contract_schema_id",
-                        contract_schema_record_hash as "contract_schema_record_hash"
-                from    data_contracts.contract_schema_property c 
+                        contract_schema_record_hash as "contract_schema_record_hash",
+                from    data_contracts.contract_schema_property c
                 where   true 
                 and     c.contract_schema_id = '{contract_schema_pk["contract_schema_id"]}'
                 and     c.contract_schema_record_hash = '{contract_schema_pk["contract_schema_record_hash"]}';
@@ -90,28 +91,39 @@ class YggFactory:
         contract_map = TargetContractMap(**contract_)
         self._target_contract_map = contract_map
 
-    def _sink_ygg_contract(self, sink_path: str) -> None:
+    @staticmethod
+    def _get_sink_folder_path(sink_path: str | Path) -> Path:
+        """Get the sink path."""
+
+        path_ = sink_path / "contracts"
+        return path_
+
+    def _sink_ygg_contract(self, sink_path: Path) -> None:
         """Sink the Ygg Contract."""
 
         contract_map = self.contract_map
-        sink_contract_root_folder = contract_map.catalog
-        sink_contract_folder = contract_map.catalog_schema
 
         for sc in contract_map.schemas:
             sink_contract_file_name = f"{sc.entity}.yaml"
-            path_ = sink_path / sink_contract_root_folder / sink_contract_folder / sink_contract_file_name
+            path_ = self._get_sink_folder_path(sink_path) / sink_contract_file_name
             json_content = sc.model_dump()
             save_yaml_content(path_, json_content)
 
-    def _sink_database(self) -> None:
-        ddb = DuckDbHelper(self._target_contract_map, replace_existing=True)
+    def _sink_database(self, sink_path: Path) -> None:
+        """Sink the database."""
+
+        ddb = DuckDbHelper(
+            self._target_contract_map,
+            replace_existing=True,
+            db_in_path=self._db_url,
+            db_out_path=self._get_sink_folder_path(sink_path),
+        )
         ddb.build_output()
 
-    def build_ygg_contract(self, sinc_result: bool = True, sink_path: str | None = None) -> None:
+    def build_contract(self, sink_path: Path, sink_result: bool = True) -> None:
         """Build the Ygg Contract."""
 
-        sink_path = sink_path if sink_path else configs.YGG_MAPS_FOLDER
         self._db_load_target_contract()
-        if sinc_result:
-            self._sink_ygg_contract(sink_path)
-            self._sink_database()
+        if sink_result:
+            # self._sink_ygg_contract(sink_path)
+            self._sink_database(sink_path)

@@ -1,9 +1,13 @@
 """Local files utilities."""
 
 import json
+import os
+import re
 from pathlib import Path
+from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 
 
 def get_file_string_content(file_path: str) -> str:
@@ -38,3 +42,33 @@ def save_yaml_content(file_path: str, content: dict) -> None:
     file_path.parent.mkdir(parents=True, exist_ok=True)
     with open(file_path, "w") as file:
         yaml.dump(content, file)
+
+
+def replace_placeholders_with_env_values(config) -> dict[str, str | Any]:
+    """Replace placeholders with environment variables."""
+    load_dotenv()
+    pattern = re.compile(r"\$\{([^}]+)\}")
+
+    def replace_match(match):
+        """Replace a match with the corresponding environment variable value."""
+        # Extract the variable name and default value if any
+        var = match.group(1)
+        if ":-" in var:
+            var_name, default = var.split(":-", 1)
+        else:
+            var_name, default = var, None
+
+        # Get the environment variable value or use the default
+        return os.getenv(var_name, default)
+
+    def replace_dict(d) -> None:
+        """Recursively replace placeholders in a dictionary."""
+        for key, value in d.items():
+            if isinstance(value, dict):
+                replace_dict(value)
+            elif isinstance(value, str):
+                d[key] = pattern.sub(replace_match, value)
+
+    replace_dict(config)
+
+    return config

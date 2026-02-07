@@ -39,6 +39,8 @@ class DuckDbHelper:
         """Build the output database."""
 
         logs.debug(f"Building output database for contract: {self._contract.id}")
+        if isinstance(self._db_out_path, str):
+            self._db_out_path = Path(self._db_out_path)
         self._db_out_path.mkdir(parents=True, exist_ok=True)
         self._create_database()
         logs.debug("Output database built successfully.")
@@ -49,6 +51,18 @@ class DuckDbHelper:
         db_file_name: str = f"{self._db_out_name}.duckdb"
         db_path = self._db_out_path / db_file_name
         ddb = duckdb.connect(read_only=False, database=db_path)
+
+        ddb.execute("install ducklake")
+        ddb.execute("load ducklake")
+
+        dl_attach_stmt: str = f"""
+            ATTACH '{self._contract.catalog_schema.lower()}' (
+                TYPE ducklake,
+                METADATA_PATH '{self._db_in_path}',
+                DATA_PATH '{self._db_in_path}'
+            )
+        """
+        ddb.execute(dl_attach_stmt)
 
         ddb.execute(self._get_ddl_create_catalog_schema())
 

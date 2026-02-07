@@ -6,7 +6,7 @@ from typing import Type, Union
 from glom import glom
 
 import ygg.utils.files_utils as file_utils
-from ygg import config
+from ygg.config import YggSetup
 from ygg.core.dynamic_models_factory import DynamicModelFactory, Model, YggBaseModel
 from ygg.core.ygg_factory import YggFactory
 from ygg.helpers.shared_model_mixin import SharedModelMixin
@@ -22,24 +22,37 @@ class ContractManagerService:
     """
 
     def __init__(
-        self, recreate_existing: bool = False, contract_data: dict | str | None = None, db_url: str | None = None
+        self,
+        recreate_existing: bool = False,
+        contract_data: dict | str | None = None,
     ):
         """Initialize the Contract Management Service."""
+
+        self._ygg_setup: YggSetup = YggSetup(create_ygg_folders=True)
+
+        self._sink_path: Path = self._ygg_setup.sink_config.location
+        self._db_url: Path = self._ygg_setup.database_config.database_url
+        self._contract_data: dict | str | None = contract_data
 
         self._contract: DynamicModelFactory = DynamicModelFactory(model=Model.CONTRACT)
         self._servers: DynamicModelFactory = DynamicModelFactory(model=Model.SERVERS)
         self._schema: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA)
         self._schema_property: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA_PROPERTY)
 
-        self._contract_data: dict | str | None = contract_data
-
-        self._db_url: str | Path = db_url or config.DATABASE_FOLDER / "db.duckdb"
-
         self._contract_id: str | None = None
         self._contract_version: str | None = None
 
         self._get_contract_data()
         self._create_if_not_exists(recreate_existing=recreate_existing)
+
+    @staticmethod
+    def _get_sink_path(sink_path: str | Path) -> Path:
+        """Get the sink path."""
+
+        if isinstance(sink_path, str):
+            return Path(sink_path)
+
+        return sink_path
 
     def _get_contract_data(self) -> dict:
         """Get the contract data."""
@@ -65,7 +78,7 @@ class ContractManagerService:
             contract_version=self._contract_version,
             db_url=self._db_url,
         )
-        factory.build_ygg_contract()
+        factory.build_contract(sink_path=self._sink_path)
 
     def _database_persist(self) -> None:
         """Save the contract data to the database."""
@@ -128,7 +141,9 @@ class ContractManagerService:
 
 
 if __name__ == "__main__":
-    c = file_utils.get_yaml_content("/data/contracts/snowflake/organization_usage/input.yaml")
+    c = file_utils.get_yaml_content(
+        "/Users/thiagodias/Tad/projects/tyr/ygg/data/contracts/snowflake/organization_usage/input.yaml"
+    )
 
     m = ContractManagerService(recreate_existing=True, contract_data=c)
     m.build_contract()
