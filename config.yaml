@@ -1,0 +1,7 @@
+ygg-database-config:
+  database: ${YGG_DATABASE_NAME}
+  database_extension: ${YGG_DATABASE_EXTENSION}
+  location: ${YGG_DATABASE_LOCATION}
+  environment: ${YGG_DATABASE_ENVIRONMENT}
+ygg-sink-config:
+  location: ${YGG_SINK_LOCATION}
