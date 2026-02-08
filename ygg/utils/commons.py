@@ -33,7 +33,9 @@ def get_yaml_content(file_path: str) -> dict:
 
 def get_yaml_from_json_content(json_content: dict) -> str:
     """Converts a JSON content to YAML format."""
-    return yaml.dump(json.loads(json_content), sort_keys=False, default_flow_style=False, indent=4)
+    return yaml.dump(
+        json.loads(json_content), sort_keys=False, default_flow_style=False, indent=4
+    )
 
 
 def save_yaml_content(file_path: str, content: dict) -> None:

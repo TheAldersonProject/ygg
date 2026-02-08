@@ -17,10 +17,14 @@ logs = get_logger()
 class YggFactory:
     """Factory for creating Ygg objects."""
 
-    def __init__(self, contract_id: str, contract_version: str, db_url: str | None = None):
+    def __init__(
+        self, contract_id: str, contract_version: str, db_url: str | None = None
+    ):
         """Initialize the Ygg Factory."""
 
-        logs.debug(f"Initializing Ygg Factory for contract: {contract_id} version: {contract_version}")
+        logs.debug(
+            f"Initializing Ygg Factory for contract: {contract_id} version: {contract_version}"
+        )
 
         if not contract_id or not contract_version:
             raise ValueError("Contract ID and version cannot be empty.")
@@ -64,7 +68,9 @@ class YggFactory:
                 and     c.contract_id = '{self._contract_id}'
                 and     c.contract_record_hash = '{contract_pk["record_hash"]}';
             """
-        contract_schema = DuckDbTools.run_sql_statement(self._db_url, contract_schema_stmt)
+        contract_schema = DuckDbTools.run_sql_statement(
+            self._db_url, contract_schema_stmt
+        )
 
         for sc_ in contract_schema:
             contract_schema_pk: dict = {
@@ -81,7 +87,9 @@ class YggFactory:
                 and     c.contract_schema_id = '{contract_schema_pk["contract_schema_id"]}'
                 and     c.contract_schema_record_hash = '{contract_schema_pk["contract_schema_record_hash"]}';
             """
-            contract_schema_properties = DuckDbTools.run_sql_statement(self._db_url, contract_schema_property_stmt)
+            contract_schema_properties = DuckDbTools.run_sql_statement(
+                self._db_url, contract_schema_property_stmt
+            )
             sc_["properties"] = contract_schema_properties
 
         contract_ = contract[0]

@@ -7,7 +7,11 @@ from glom import glom
 
 import ygg.utils.commons as file_utils
 from ygg.config import YggSetup
-from ygg.core.dynamic_odcs_models_factory import DynamicModelFactory, Model, YggBaseModel
+from ygg.core.dynamic_odcs_models_factory import (
+    DynamicModelFactory,
+    Model,
+    YggBaseModel,
+)
 from ygg.core.dynamic_ygg_models_factory import YggFactory
 from ygg.helpers.duckdb_tools import DuckDbTools
 from ygg.helpers.logical_data_models import SharedModelMixin
@@ -39,14 +43,18 @@ class DataContractManagerService:
         self._contract: DynamicModelFactory = DynamicModelFactory(model=Model.CONTRACT)
         self._servers: DynamicModelFactory = DynamicModelFactory(model=Model.SERVERS)
         self._schema: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA)
-        self._schema_property: DynamicModelFactory = DynamicModelFactory(model=Model.SCHEMA_PROPERTY)
+        self._schema_property: DynamicModelFactory = DynamicModelFactory(
+            model=Model.SCHEMA_PROPERTY
+        )
 
         self._contract_id: str | None = None
         self._contract_version: str | None = None
 
         self._recreate_existing: bool = recreate_existing
         self._insert_on_conflict_ignore: bool = insert_on_conflict_ignore
-        self._enforce_create_schema_if_not_exists: bool = enforce_create_schema_if_not_exists
+        self._enforce_create_schema_if_not_exists: bool = (
+            enforce_create_schema_if_not_exists
+        )
 
     def _get_contract_data(self) -> None:
         """Get the contract data."""
@@ -68,7 +76,9 @@ class DataContractManagerService:
         """Save the contract data to the database."""
 
         if self._contract_data is None:
-            raise ValueError("Contract data is not set. Please set the contract data before saving.")
+            raise ValueError(
+                "Contract data is not set. Please set the contract data before saving."
+            )
 
         models_list = [self._contract, self._servers, self._schema]
         edge_models_list = [self._schema_property]
@@ -109,7 +119,9 @@ class DataContractManagerService:
 
                     if model_ is self._schema:
                         schema_property_ = self._schema_property
-                        schema_properties_ = glom(d, schema_property_.settings.document_path)
+                        schema_properties_ = glom(
+                            d, schema_property_.settings.document_path
+                        )
 
                         if schema_properties_:
                             iterate_and_save(schema_properties_, schema_property_)
@@ -119,7 +131,12 @@ class DataContractManagerService:
     def _create_ygg_db_if_not_exists(self) -> None:
         """Create the contract if it does not exist."""
 
-        models_list = [self._contract, self._servers, self._schema, self._schema_property]
+        models_list = [
+            self._contract,
+            self._servers,
+            self._schema,
+            self._schema_property,
+        ]
         for model in models_list:
             tools = DuckDbTools(model=model.settings, ygg_db_url=self._ygg_db_url)
             tools.create_table(

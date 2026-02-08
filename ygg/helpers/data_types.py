@@ -91,13 +91,17 @@ DATA_TYPES: dict = {
         "logical": {
             "type": AuthoritativeDefinitions,
         },
-        "physical": {"type": "STRUCT(id VARCHAR, url VARCHAR, type VARCHAR, description VARCHAR)[]"},
+        "physical": {
+            "type": "STRUCT(id VARCHAR, url VARCHAR, type VARCHAR, description VARCHAR)[]"
+        },
     },
     "StructuredDescription": {
         "logical": {
             "type": StructuredDescription,
         },
-        "physical": {"type": "STRUCT(purpose VARCHAR, limitations VARCHAR, usage VARCHAR)"},
+        "physical": {
+            "type": "STRUCT(purpose VARCHAR, limitations VARCHAR, usage VARCHAR)"
+        },
     },
     "StructuredName": {
         "logical": {
@@ -118,7 +122,10 @@ DATA_TYPES: dict = {
     "string": {"logical": {"type": str}, "physical": {"type": "VARCHAR"}},
     "integer": {"logical": {"type": int}, "physical": {"type": "BIGINT"}},
     "boolean": {"logical": {"type": bool}, "physical": {"type": "BOOLEAN"}},
-    "list_of_strings": {"logical": {"type": list[str]}, "physical": {"type": "VARCHAR[]"}},
+    "list_of_strings": {
+        "logical": {"type": list[str]},
+        "physical": {"type": "VARCHAR[]"},
+    },
     "timestamp": {
         "logical": {
             "type": datetime.datetime,

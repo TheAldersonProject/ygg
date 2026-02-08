@@ -55,7 +55,9 @@ class YggRepositoryConfiguration(YggBaseConfig):
     """Ygg Repository"""
 
     repository: str = Field(..., description="Repository name")
-    ducklake_repository_data_location: str | Path = Field(..., description="Repository location")
+    ducklake_repository_data_location: str | Path = Field(
+        ..., description="Repository location"
+    )
     ducklake_metadata_repository: DuckLakeMetadataRepository = Field(
         ...,
         description="Metadata repository technology, must be of type YggMetadataRepository",
@@ -81,7 +83,9 @@ class YggSinkConfig(YggBaseConfig):
 
 class YggDatabaseConfig(YggBaseConfig):
     database: str = Field(..., description="Database name")
-    database_extension: str = Field(..., description="Database extension, e.g. .db or .duckdb")
+    database_extension: str = Field(
+        ..., description="Database extension, e.g. .db or .duckdb"
+    )
     environment: Literal["dev", "prod"] = Field(..., description="Environment name")
     database_location: Path = Field(..., description="Path to the database")
     data_location: Path = Field(..., description="Path to store the data")
@@ -99,7 +103,11 @@ class YggDatabaseConfig(YggBaseConfig):
     def database_url(self) -> Path:
         """Get the database URL."""
 
-        database_name = f"{self.database}.{self.database_extension}" if self.database_extension else self.database
+        database_name = (
+            f"{self.database}.{self.database_extension}"
+            if self.database_extension
+            else self.database
+        )
         return self.database_location / database_name
 
 
@@ -107,7 +115,11 @@ class YggDatabaseConfig(YggBaseConfig):
 class YggSetup:
     """Ygg Setup."""
 
-    def __init__(self, create_ygg_folders: bool = True, config_data: dict[str, str | Any] | None = None):
+    def __init__(
+        self,
+        create_ygg_folders: bool = True,
+        config_data: dict[str, str | Any] | None = None,
+    ):
         """Initialize the Ygg Setup."""
 
         self._config = self._get_config(config_data)
@@ -139,7 +151,9 @@ class YggSetup:
     def ygg_repository_config(self) -> YggRepositoryConfiguration:
         """Get the Ygg Repository Config."""
 
-        return YggRepositoryConfiguration(**self._config.get("ygg-repository-config", {}))
+        return YggRepositoryConfiguration(
+            **self._config.get("ygg-repository-config", {})
+        )
 
     @property
     def ygg_s3_config(self) -> YggS3Config:
@@ -152,7 +166,9 @@ class YggSetup:
         ygg_database_config = self._config.get("ygg-database-config", {})
 
         if not ygg_database_config:
-            raise ValueError("Ygg Database Config not found. Please check the config.yaml file.")
+            raise ValueError(
+                "Ygg Database Config not found. Please check the config.yaml file."
+            )
 
         db_config = YggDatabaseConfig(**ygg_database_config)
         if self._create_ygg_folders:
@@ -166,7 +182,9 @@ class YggSetup:
         ygg_sink_config = self._config.get("ygg-sink-config", {})
 
         if not ygg_sink_config:
-            raise ValueError("Ygg Sink Config not found. Please check the config.yaml file.")
+            raise ValueError(
+                "Ygg Sink Config not found. Please check the config.yaml file."
+            )
 
         sink_config = YggSinkConfig(**ygg_sink_config)
         if self._create_ygg_folders:

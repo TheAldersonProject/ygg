@@ -10,7 +10,13 @@ import ygg.config as constants
 import ygg.utils.commons as file_utils
 import ygg.utils.ygg_logs as log_utils
 from ygg.helpers.data_types import get_data_type
-from ygg.helpers.logical_data_models import Model, ModelSettings, SharedModelMixin, YggBaseModel, YggConfig
+from ygg.helpers.logical_data_models import (
+    Model,
+    ModelSettings,
+    SharedModelMixin,
+    YggBaseModel,
+    YggConfig,
+)
 
 logs = log_utils.get_logger()
 
@@ -72,7 +78,9 @@ class DynamicModelFactory:
     def _get_schema_version(self) -> str:
         """Get the schema version."""
 
-        version_file_path: str = f"{self._models_schema_path}/{self._schema_config.version_file}"
+        version_file_path: str = (
+            f"{self._models_schema_path}/{self._schema_config.version_file}"
+        )
         version = file_utils.get_file_string_content(version_file_path)
 
         logs.debug("Models Schema Version Loaded.", version=version)
@@ -95,7 +103,9 @@ class DynamicModelFactory:
     def _load_odcs_schema(self) -> None:
         """Loads the ODCS Schema."""
 
-        odcs_schema_file_path: str = f"{self._odcs_schema_path}/{self._schema_config.odcs_schema_file}"
+        odcs_schema_file_path: str = (
+            f"{self._odcs_schema_path}/{self._schema_config.odcs_schema_file}"
+        )
         schema_content = file_utils.get_json_file_content(odcs_schema_file_path)
 
         self._odcs_schema = schema_content
@@ -133,19 +143,33 @@ class DynamicModelFactory:
         for prop in self._model_settings.properties:
             if prop.odcs_schema:
                 odcs_: dict = glom(self._odcs_schema, prop.odcs_schema)
-                prop.alias = prop.odcs_schema.split(".")[-1] if not prop.alias else prop.alias
+                prop.alias = (
+                    prop.odcs_schema.split(".")[-1] if not prop.alias else prop.alias
+                )
                 prop.type = odcs_.get("type", None) if not prop.type else prop.type
-                prop.default = odcs_.get("default", None) if not prop.default else prop.default
+                prop.default = (
+                    odcs_.get("default", None) if not prop.default else prop.default
+                )
                 prop.enum = odcs_.get("enum", None) if not prop.enum else prop.enum
-                prop.description = odcs_.get("description", None) if not prop.description else prop.description
-                prop.examples = odcs_.get("examples", None) if not prop.examples else prop.examples
+                prop.description = (
+                    odcs_.get("description", None)
+                    if not prop.description
+                    else prop.description
+                )
+                prop.examples = (
+                    odcs_.get("examples", None) if not prop.examples else prop.examples
+                )
                 odcs_: dict = glom(self._odcs_schema, prop.odcs_schema)
-                prop.required = odcs_.get("required", None) if not prop.required else prop.required
+                prop.required = (
+                    odcs_.get("required", None) if not prop.required else prop.required
+                )
 
             if prop.enum and isinstance(prop.enum, list):
                 logical_type_ = Literal[tuple(prop.enum)]  # type: ignore
             else:
-                logical_type_ = DynamicModelFactory._get_logical_data_type(prop.type)["type"]
+                logical_type_ = DynamicModelFactory._get_logical_data_type(prop.type)[
+                    "type"
+                ]
 
             if prop.required and not prop.default:
                 prop.default = ...
@@ -158,7 +182,9 @@ class DynamicModelFactory:
                 pattern=prop.pattern,
             )
 
-            fields_map_[prop.name] = Annotated[logical_type_ if prop.required else Optional[logical_type_], field_]
+            fields_map_[prop.name] = Annotated[
+                logical_type_ if prop.required else Optional[logical_type_], field_
+            ]
             read_fields_map_[prop.alias or prop.name] = Annotated[
                 Optional[logical_type_], Field(default=None, alias=prop.name.upper())
             ]

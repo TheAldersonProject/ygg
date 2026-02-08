@@ -12,14 +12,20 @@ database_object_types: dict = dict(schema="schema", table="table")
 
 DDB_CREATE_SCHEMA: str = "CREATE SCHEMA IF NOT EXISTS {object_schema_name};"
 DDB_CREATE_SCHEMA_NAME: str = "{object_schema_name}."
-DDB_CREATE_OR_REPLACE: str = """CREATE OR REPLACE {object_type} {create_schema_name}{object_name} """
-DDB_CREATE_IF_NOT_EXISTS: str = """CREATE {object_type} IF NOT EXISTS {create_schema_name}{object_name} """
-
-DDB_DDL_FIELD_TEMPLATE: str = (
-    "{field_name} {field_type} {nullable} {field_pk_uc} {default_value} {field_check_constraint}"
+DDB_CREATE_OR_REPLACE: str = (
+    """CREATE OR REPLACE {object_type} {create_schema_name}{object_name} """
 )
-DDB_DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE: str = "CHECK ({field_check_constraint_expression})"
-DDL_FIELD_CHECK_CONSTRAINT_REGEX_TEMPLATE: str = "regexp_matches({field_name}, '{regex}')"
+DDB_CREATE_IF_NOT_EXISTS: str = (
+    """CREATE {object_type} IF NOT EXISTS {create_schema_name}{object_name} """
+)
+
+DDB_DDL_FIELD_TEMPLATE: str = "{field_name} {field_type} {nullable} {field_pk_uc} {default_value} {field_check_constraint}"
+DDB_DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE: str = (
+    "CHECK ({field_check_constraint_expression})"
+)
+DDL_FIELD_CHECK_CONSTRAINT_REGEX_TEMPLATE: str = (
+    "regexp_matches({field_name}, '{regex}')"
+)
 
 logs = get_logger()
 
@@ -40,7 +46,9 @@ class OdcsPhysicalModel:
 
     def get_create_schema_ddl(self) -> str:
         """Create a schema statement."""
-        ddl: str = DDB_CREATE_SCHEMA.format(object_schema_name=self._model.entity_schema).upper()
+        ddl: str = DDB_CREATE_SCHEMA.format(
+            object_schema_name=self._model.entity_schema
+        ).upper()
         logs.debug("Create schema statement generated.", schema=ddl)
         return ddl
 
@@ -52,7 +60,9 @@ class OdcsPhysicalModel:
         for p in self._model.properties:
             if p.description and p.description.strip():
                 description: str = p.description.strip()
-                column: str = f"{self._model.entity_schema}.{self._model.entity_name}.{p.name}"
+                column: str = (
+                    f"{self._model.entity_schema}.{self._model.entity_name}.{p.name}"
+                )
                 description = re.sub(r"[^a-zA-Z0-9 ]", "", description)
                 comment: str = f"COMMENT ON COLUMN {column} IS '{description}';"
                 list_of_comments.append(comment)
@@ -83,7 +93,13 @@ class OdcsPhysicalModel:
             field_default_value_: Any = None,
             physical_default_function_: Any = None,
         ):
-            if field_type_.upper() in ("TIMESTAMP", "TIMESTAMPTZ", "TIMESTAMP_LTZ", "BIGINT", "INTEGER"):
+            if field_type_.upper() in (
+                "TIMESTAMP",
+                "TIMESTAMPTZ",
+                "TIMESTAMP_LTZ",
+                "BIGINT",
+                "INTEGER",
+            ):
                 if physical_default_function_:
                     field_default_value_ = f" DEFAULT {physical_default_function_}"
                 elif field_default_value_:
@@ -94,7 +110,9 @@ class OdcsPhysicalModel:
                     field_default_value_ = f" DEFAULT '{field_default_value_}'"
 
                 elif field_type_.upper() in ("BOOL", "BOOLEAN"):
-                    field_default_value_ = f" DEFAULT {1 if field_default_value_ else 0}"
+                    field_default_value_ = (
+                        f" DEFAULT {1 if field_default_value_ else 0}"
+                    )
 
                 else:
                     field_default_value_ = f" DEFAULT {field_default_value_}"
@@ -132,22 +150,30 @@ class OdcsPhysicalModel:
             list_of_check_constraints: list = []
 
             if p.enum:
-                field_type: str = f""" ENUM({", ".join(["'" + e + "'" for e in p.enum])}) """
+                field_type: str = (
+                    f""" ENUM({", ".join(["'" + e + "'" for e in p.enum])}) """
+                )
 
             else:
-                custom_field_type: dict = OdcsPhysicalModel.get_physical_data_type(p.type)
+                custom_field_type: dict = OdcsPhysicalModel.get_physical_data_type(
+                    p.type
+                )
                 pattern: str = custom_field_type.get("pattern", p.pattern)
                 field_type: str = custom_field_type.get("type", p.type)
 
                 if pattern:
-                    field_check_constraint = DDL_FIELD_CHECK_CONSTRAINT_REGEX_TEMPLATE.format(
-                        field_name=field_name,
-                        regex=pattern,
+                    field_check_constraint = (
+                        DDL_FIELD_CHECK_CONSTRAINT_REGEX_TEMPLATE.format(
+                            field_name=field_name,
+                            regex=pattern,
+                        )
                     )
                     list_of_check_constraints.append(field_check_constraint)
 
             if list_of_check_constraints:
-                field_check_constraint_expression: str = " AND ".join(list_of_check_constraints)
+                field_check_constraint_expression: str = " AND ".join(
+                    list_of_check_constraints
+                )
                 field_check_constraint: str = DDB_DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE.format(
                     field_check_constraint_expression=field_check_constraint_expression
                 )
@@ -170,10 +196,14 @@ class OdcsPhysicalModel:
 
         return list_of_fields
 
-    def get_create_table_ddl(self, recreate_existing: bool = False, with_create_schema: bool = False) -> str:
+    def get_create_table_ddl(
+        self, recreate_existing: bool = False, with_create_schema: bool = False
+    ) -> str:
         """Create a table statement."""
 
-        object_type: str = database_object_types.get(str(self._model.entity_type).lower(), None)
+        object_type: str = database_object_types.get(
+            str(self._model.entity_type).lower(), None
+        )
         if not object_type:
             logs.error("Invalid Entity Type.", entity_type=self._model.entity_type)
             raise ValueError(f"Invalid Entity Type: {self._model.entity_type}.")
@@ -193,9 +223,15 @@ class OdcsPhysicalModel:
 
         logs.debug("Parsing DDL.")
 
-        ddl_create_table_statement_template = textwrap.dedent(ddl_create_table_statement_template)
-        rendered_schema_name = DDB_CREATE_SCHEMA_NAME.format(object_schema_name=self._model.entity_schema)
-        create_table_statement = DDB_CREATE_OR_REPLACE if recreate_existing else DDB_CREATE_IF_NOT_EXISTS
+        ddl_create_table_statement_template = textwrap.dedent(
+            ddl_create_table_statement_template
+        )
+        rendered_schema_name = DDB_CREATE_SCHEMA_NAME.format(
+            object_schema_name=self._model.entity_schema
+        )
+        create_table_statement = (
+            DDB_CREATE_OR_REPLACE if recreate_existing else DDB_CREATE_IF_NOT_EXISTS
+        )
         values_map: dict = {
             "create_schema_name": rendered_schema_name,
             "object_type": object_type,
@@ -204,7 +240,8 @@ class OdcsPhysicalModel:
         create_table_statement = create_table_statement.format(**values_map).upper()
 
         rendered_statement: str = ddl_create_table_statement_template.format(
-            create_table_statement=create_table_statement, fields_ddl_block=fields_ddl_block
+            create_table_statement=create_table_statement,
+            fields_ddl_block=fields_ddl_block,
         )
         rendered_statement = rendered_statement.strip()
 

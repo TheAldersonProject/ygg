@@ -15,8 +15,15 @@ def main():
     # def main2():
     parser = argparse.ArgumentParser(description="Ygg Starter")
 
-    parser.add_argument("-r", "--recreate", action="store_true", help="Recreate all database objects in the database.")
-    parser.add_argument("-f", "--file", "--contract", required=True, help="Path to the contract file.")
+    parser.add_argument(
+        "-r",
+        "--recreate",
+        action="store_true",
+        help="Recreate all database objects in the database.",
+    )
+    parser.add_argument(
+        "-f", "--file", "--contract", required=True, help="Path to the contract file."
+    )
     # parser.add_argument("-o", "--output", help="Path to the output folder.")
 
     args = parser.parse_args()
@@ -33,7 +40,9 @@ def main():
     # logs.debug("Data folder set.", args=args, data_folder=data_folder)
     # logs.debug("Destination set.", destination_path=data_folder or "Data will be saved in the current folder.")
 
-    manager = DataContractManagerService(recreate_existing=args.recreate, contract_data=contract_data_path)
+    manager = DataContractManagerService(
+        recreate_existing=args.recreate, contract_data=contract_data_path
+    )
     manager.build_contract()
 
 
