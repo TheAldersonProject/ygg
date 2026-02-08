@@ -6,8 +6,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ygg.utils.commons import get_yaml_content, replace_placeholders_with_env_values
 from ygg.utils.custom_decorators import singleton
-from ygg.utils.files_utils import replace_placeholders_with_env_values
 
 CURRENT_FILE_PATH = Path(__file__).resolve()
 SRC_FOLDER = CURRENT_FILE_PATH.parent
@@ -29,7 +29,8 @@ ASSETS_FOLDER = SRC_FOLDER / "assets"
 ODCS_SCHEMA_FOLDER = ASSETS_FOLDER / "odcs_schemas"
 YGG_SCHEMAS_FOLDER = ASSETS_FOLDER / "ygg_schemas"
 
-YGG_SCHEMA_CONFIG_FILE = PROJECT_ROOT / "config.yaml"
+YGG_SCHEMA_CONFIG_FILE = YGG_SCHEMAS_FOLDER / "config.yaml"
+YGG_CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 
 
 class YggBaseConfig(BaseModel):
@@ -41,7 +42,6 @@ class YggBaseConfig(BaseModel):
 class DuckLakeMetadataRepository(Enum):
     """DuckLake Metadata Repository"""
 
-    DUCKLAKE = "ducklake"
     POSTGRES = "postgres"
 
 
@@ -49,7 +49,6 @@ class DuckLakeRepository(Enum):
     """DuckLake Repository"""
 
     S3 = "s3"
-    LOCAL = "local"
 
 
 class YggRepositoryConfiguration(YggBaseConfig):
@@ -111,8 +110,9 @@ class YggSetup:
     def __init__(self, create_ygg_folders: bool = True, config_data: dict[str, str | Any] | None = None):
         """Initialize the Ygg Setup."""
 
-        self._create_ygg_folders = create_ygg_folders
         self._config = self._get_config(config_data)
+        print(self._config)
+        self._create_ygg_folders = create_ygg_folders
 
         self._sink_config: YggSinkConfig = self._ygg_sink_config()
         self._database_config: YggDatabaseConfig = self._ygg_database_config()
@@ -175,8 +175,11 @@ class YggSetup:
         return sink_config
 
     @staticmethod
-    def _get_config(config_data) -> dict[str, str | Any]:
+    def _get_config(config_data: dict) -> dict[str, str | Any]:
         """Get the configuration."""
+
+        if not config_data:
+            config_data = get_yaml_content(YGG_CONFIG_FILE)
 
         config = config_data
         config = replace_placeholders_with_env_values(config)

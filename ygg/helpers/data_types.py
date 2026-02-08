@@ -3,7 +3,9 @@
 import datetime
 from typing import Annotated, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from ygg.helpers.logical_data_models import YggBaseModel
 
 StableId = Annotated[
     str,
@@ -11,7 +13,7 @@ StableId = Annotated[
 ]
 
 
-class AuthoritativeDefinition(BaseModel):
+class AuthoritativeDefinition(YggBaseModel):
     """Authoritative Definition."""
 
     id: str = Field(alias="id")
@@ -20,7 +22,7 @@ class AuthoritativeDefinition(BaseModel):
     description: Optional[str]
 
 
-class Description(BaseModel):
+class Description(YggBaseModel):
     """Authoritative Definition."""
 
     usage: str
@@ -28,7 +30,7 @@ class Description(BaseModel):
     limitations: str
 
 
-class CustomProperty(BaseModel):
+class CustomProperty(YggBaseModel):
     """Custom Property"""
 
     id: StableId = Field(default=None)

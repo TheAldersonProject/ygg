@@ -1,79 +1,18 @@
 """Dynamic models factory module is responsible for creating dynamic models based on schema definitions."""
 
 from collections import defaultdict
-from enum import Enum
 from typing import Annotated, Any, Literal, Optional, Type, Union
 
 from glom import glom
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import ConfigDict, Field, create_model
 
 import ygg.config as constants
-import ygg.utils.files_utils as file_utils
+import ygg.utils.commons as file_utils
 import ygg.utils.ygg_logs as log_utils
 from ygg.helpers.data_types import get_data_type
-from ygg.helpers.shared_model_mixin import SharedModelMixin
+from ygg.helpers.logical_data_models import Model, ModelSettings, SharedModelMixin, YggBaseModel, YggConfig
 
 logs = log_utils.get_logger()
-
-
-class YggBaseModel(BaseModel):
-    """Dynamic Models Factory Base Model."""
-
-    model_config = ConfigDict(use_enum_values=True)
-
-
-class _YggConfig(YggBaseModel):
-    """Dynamic Models Factory Config."""
-
-    version_file: str
-    odcs_version: str
-    odcs_schema_file: str
-    models: list[str]
-    commons: list[dict] | None = Field(default=None)
-
-
-class ModelProperty(YggBaseModel):
-    """Dynamic Models Factory Config."""
-
-    name: str | None = Field(default=None)
-    type: str | None = Field(default=None)
-    pattern: str | None = Field(default=None)
-    default: Any | None = Field(default=None)
-    physical_default_function: str | None = Field(default=None)
-    unique: bool | None = Field(default=False)
-    description: str | None = Field(default=None)
-    required: bool | None = Field(default=True)
-    primary_key: bool | None = Field(default=False)
-    alias: str | None = Field(default=None)
-    enum: list | None = Field(default=None)
-    odcs_schema: str | None = Field(default=None)
-    skip_from_signature: bool = Field(default=False)
-    skip_from_physical_model: bool = Field(default=False)
-    examples: list[str] | None = Field(default=None)
-
-
-class ModelSettings(YggBaseModel):
-    """Model Settings Model."""
-
-    name: str
-    document_path: str
-    type: str
-    required: bool
-    entity_name: str
-    entity_type: str
-    entity_schema: str
-    description: str
-    odcs_reference: str
-    properties: list[ModelProperty]
-
-
-class Model(Enum):
-    """Contract Models Enum."""
-
-    CONTRACT = "contract"
-    SCHEMA = "schema"
-    SCHEMA_PROPERTY = "schema_property"
-    SERVERS = "servers"
 
 
 class DynamicModelFactory:
@@ -92,7 +31,7 @@ class DynamicModelFactory:
         self._odcs_schema_path: str = constants.ODCS_SCHEMA_FOLDER
         self._models_schema_path: str = constants.YGG_SCHEMAS_FOLDER
         self._models_config_file: str = constants.YGG_SCHEMA_CONFIG_FILE
-        self._schema_config: _YggConfig | None = None
+        self._schema_config: YggConfig | None = None
         self._schema_version: str | None = None
         self._odcs_schema: dict | None = None
 
@@ -148,7 +87,7 @@ class DynamicModelFactory:
             raise ValueError("Models Schema not found.")
 
         logs.debug("Models Schema Loaded.", models=schema_config)
-        configs = _YggConfig(**schema_config)
+        configs = YggConfig(**schema_config)
 
         self._schema_config = configs
         self._schema_version = self._get_schema_version()

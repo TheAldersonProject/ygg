@@ -10,19 +10,21 @@ from ygg.utils.ygg_logs import get_logger
 
 database_object_types: dict = dict(schema="schema", table="table")
 
-CREATE_SCHEMA: str = "CREATE SCHEMA IF NOT EXISTS {object_schema_name};"
-CREATE_SCHEMA_NAME: str = "{object_schema_name}."
-CREATE_OR_REPLACE: str = """CREATE OR REPLACE {object_type} {create_schema_name}{object_name} """
-CREATE_IF_NOT_EXISTS: str = """CREATE {object_type} IF NOT EXISTS {create_schema_name}{object_name} """
+DDB_CREATE_SCHEMA: str = "CREATE SCHEMA IF NOT EXISTS {object_schema_name};"
+DDB_CREATE_SCHEMA_NAME: str = "{object_schema_name}."
+DDB_CREATE_OR_REPLACE: str = """CREATE OR REPLACE {object_type} {create_schema_name}{object_name} """
+DDB_CREATE_IF_NOT_EXISTS: str = """CREATE {object_type} IF NOT EXISTS {create_schema_name}{object_name} """
 
-DDL_FIELD_TEMPLATE: str = "{field_name} {field_type} {nullable} {field_pk_uc} {default_value} {field_check_constraint}"
-DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE: str = "CHECK ({field_check_constraint_expression})"
+DDB_DDL_FIELD_TEMPLATE: str = (
+    "{field_name} {field_type} {nullable} {field_pk_uc} {default_value} {field_check_constraint}"
+)
+DDB_DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE: str = "CHECK ({field_check_constraint_expression})"
 DDL_FIELD_CHECK_CONSTRAINT_REGEX_TEMPLATE: str = "regexp_matches({field_name}, '{regex}')"
 
 logs = get_logger()
 
 
-class PhysicalModelHelper:
+class OdcsPhysicalModel:
     """Tools for physical model operations."""
 
     def __init__(self, model: ModelSettings) -> None:
@@ -38,7 +40,7 @@ class PhysicalModelHelper:
 
     def get_create_schema_ddl(self) -> str:
         """Create a schema statement."""
-        ddl: str = CREATE_SCHEMA.format(object_schema_name=self._model.entity_schema).upper()
+        ddl: str = DDB_CREATE_SCHEMA.format(object_schema_name=self._model.entity_schema).upper()
         logs.debug("Create schema statement generated.", schema=ddl)
         return ddl
 
@@ -111,7 +113,7 @@ class PhysicalModelHelper:
 
             field_pk_uc = f"{is_primary_key}{is_unique_key}"
 
-            field_ddl: str = DDL_FIELD_TEMPLATE.format(
+            field_ddl: str = DDB_DDL_FIELD_TEMPLATE.format(
                 field_name=field_name_,
                 field_type=field_type_,
                 nullable=nullable_,
@@ -133,7 +135,7 @@ class PhysicalModelHelper:
                 field_type: str = f""" ENUM({", ".join(["'" + e + "'" for e in p.enum])}) """
 
             else:
-                custom_field_type: dict = PhysicalModelHelper.get_physical_data_type(p.type)
+                custom_field_type: dict = OdcsPhysicalModel.get_physical_data_type(p.type)
                 pattern: str = custom_field_type.get("pattern", p.pattern)
                 field_type: str = custom_field_type.get("type", p.type)
 
@@ -146,7 +148,7 @@ class PhysicalModelHelper:
 
             if list_of_check_constraints:
                 field_check_constraint_expression: str = " AND ".join(list_of_check_constraints)
-                field_check_constraint: str = DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE.format(
+                field_check_constraint: str = DDB_DDL_FIELD_CHECK_CONSTRAINT_TEMPLATE.format(
                     field_check_constraint_expression=field_check_constraint_expression
                 )
 
@@ -192,8 +194,8 @@ class PhysicalModelHelper:
         logs.debug("Parsing DDL.")
 
         ddl_create_table_statement_template = textwrap.dedent(ddl_create_table_statement_template)
-        rendered_schema_name = CREATE_SCHEMA_NAME.format(object_schema_name=self._model.entity_schema)
-        create_table_statement = CREATE_OR_REPLACE if recreate_existing else CREATE_IF_NOT_EXISTS
+        rendered_schema_name = DDB_CREATE_SCHEMA_NAME.format(object_schema_name=self._model.entity_schema)
+        create_table_statement = DDB_CREATE_OR_REPLACE if recreate_existing else DDB_CREATE_IF_NOT_EXISTS
         values_map: dict = {
             "create_schema_name": rendered_schema_name,
             "object_type": object_type,

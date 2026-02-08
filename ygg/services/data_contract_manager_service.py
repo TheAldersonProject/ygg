@@ -5,12 +5,12 @@ from typing import Type, Union
 
 from glom import glom
 
-import ygg.utils.files_utils as file_utils
+import ygg.utils.commons as file_utils
 from ygg.config import YggSetup
 from ygg.core.dynamic_odcs_models_factory import DynamicModelFactory, Model, YggBaseModel
 from ygg.core.dynamic_ygg_models_factory import YggFactory
-from ygg.helpers.shared_model_mixin import SharedModelMixin
-from ygg.services.physical_model_tools import PhysicalModelTools
+from ygg.helpers.duckdb_tools import DuckDbTools
+from ygg.helpers.logical_data_models import SharedModelMixin
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -86,7 +86,7 @@ class DataContractManagerService:
                 data = [data]
 
             def save(dt_, model_):
-                tools_ = PhysicalModelTools(model=model_.settings, ygg_db_url=self._ygg_db_url)
+                tools_ = DuckDbTools(model=model_.settings, ygg_db_url=self._ygg_db_url)
                 entity: Type[Union[YggBaseModel, SharedModelMixin]] = model_.instance
                 entity = entity.inflate(data=dt_, model_hydrate=model_hydrate)
 
@@ -121,7 +121,7 @@ class DataContractManagerService:
 
         models_list = [self._contract, self._servers, self._schema, self._schema_property]
         for model in models_list:
-            tools = PhysicalModelTools(model=model.settings, ygg_db_url=self._ygg_db_url)
+            tools = DuckDbTools(model=model.settings, ygg_db_url=self._ygg_db_url)
             tools.create_table(
                 recreate_existing=self._recreate_existing,
                 enforce_create_schema_if_not_exists=self._enforce_create_schema_if_not_exists,

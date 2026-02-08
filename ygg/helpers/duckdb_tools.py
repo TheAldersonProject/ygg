@@ -6,14 +6,14 @@ from typing import Any, Type, Union
 import duckdb
 
 from ygg.core.dynamic_odcs_models_factory import ModelSettings, YggBaseModel
-from ygg.helpers.physical_model import PhysicalModelHelper
-from ygg.helpers.shared_model_mixin import SharedModelMixin
+from ygg.helpers.logical_data_models import SharedModelMixin
+from ygg.helpers.odcs_physical_model import OdcsPhysicalModel
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
 
 
-class PhysicalModelTools:
+class DuckDbTools:
     """Tools for physical model operations."""
 
     def __init__(self, model: ModelSettings, ygg_db_url: str = ":memory:") -> None:
@@ -23,7 +23,7 @@ class PhysicalModelTools:
             raise ValueError("Ygg Model Cannot be Empty.")
 
         self._model: ModelSettings = model
-        self._helper: PhysicalModelHelper = PhysicalModelHelper(model)
+        self._helper: OdcsPhysicalModel = OdcsPhysicalModel(model)
 
         self._db_url: str = ygg_db_url
 
