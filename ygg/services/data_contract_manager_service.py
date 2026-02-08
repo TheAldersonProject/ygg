@@ -7,8 +7,8 @@ from glom import glom
 
 import ygg.utils.files_utils as file_utils
 from ygg.config import YggSetup
-from ygg.core.dynamic_models_factory import DynamicModelFactory, Model, YggBaseModel
-from ygg.core.ygg_factory import YggFactory
+from ygg.core.dynamic_odcs_models_factory import DynamicModelFactory, Model, YggBaseModel
+from ygg.core.dynamic_ygg_models_factory import YggFactory
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.services.physical_model_tools import PhysicalModelTools
 from ygg.utils.ygg_logs import get_logger
@@ -16,14 +16,16 @@ from ygg.utils.ygg_logs import get_logger
 logs = get_logger()
 
 
-class ContractManagerService:
+class DataContractManagerService:
     """
     Service for managing contracts and related data.
     """
 
     def __init__(
         self,
+        insert_on_conflict_ignore: bool = True,
         recreate_existing: bool = False,
+        enforce_create_schema_if_not_exists: bool = False,
         contract_data: dict | str | None = None,
     ):
         """Initialize the Contract Management Service."""
@@ -31,7 +33,7 @@ class ContractManagerService:
         self._ygg_setup: YggSetup = YggSetup(create_ygg_folders=True)
 
         self._sink_path: Path = self._ygg_setup.sink_config.location
-        self._db_url: Path = self._ygg_setup.database_config.database_url
+        self._ygg_db_url: Path = self._ygg_setup.database_config.database_url
         self._contract_data: dict | str | None = contract_data
 
         self._contract: DynamicModelFactory = DynamicModelFactory(model=Model.CONTRACT)
@@ -42,20 +44,13 @@ class ContractManagerService:
         self._contract_id: str | None = None
         self._contract_version: str | None = None
 
-        self._get_contract_data()
-        self._create_if_not_exists(recreate_existing=recreate_existing)
+        self._recreate_existing: bool = recreate_existing
+        self._insert_on_conflict_ignore: bool = insert_on_conflict_ignore
+        self._enforce_create_schema_if_not_exists: bool = enforce_create_schema_if_not_exists
 
-    @staticmethod
-    def _get_sink_path(sink_path: str | Path) -> Path:
-        """Get the sink path."""
-
-        if isinstance(sink_path, str):
-            return Path(sink_path)
-
-        return sink_path
-
-    def _get_contract_data(self) -> dict:
+    def _get_contract_data(self) -> None:
         """Get the contract data."""
+
         logs.debug("File path", path=self._contract_data)
 
         if isinstance(self._contract_data, dict):
@@ -69,18 +64,7 @@ class ContractManagerService:
         logs.debug("Contract Data Loaded.", data=data)
         self._contract_data = data
 
-    def build_contract(self) -> None:
-        """Build the contract by creating and populating the necessary models."""
-
-        self._database_persist()
-        factory = YggFactory(
-            contract_id=self._contract_id,
-            contract_version=self._contract_version,
-            db_url=self._db_url,
-        )
-        factory.build_contract(sink_path=self._sink_path)
-
-    def _database_persist(self) -> None:
+    def _database_persist_data_contract(self) -> None:
         """Save the contract data to the database."""
 
         if self._contract_data is None:
@@ -89,6 +73,8 @@ class ContractManagerService:
         models_list = [self._contract, self._servers, self._schema]
         edge_models_list = [self._schema_property]
         model_hydrate: dict = {}
+
+        self._create_ygg_db_if_not_exists()
 
         for model in models_list:
             data = glom(self._contract_data, model.settings.document_path)
@@ -100,13 +86,13 @@ class ContractManagerService:
                 data = [data]
 
             def save(dt_, model_):
-                tools_ = PhysicalModelTools(model=model_.settings, db_path=self._db_url)
+                tools_ = PhysicalModelTools(model=model_.settings, ygg_db_url=self._ygg_db_url)
                 entity: Type[Union[YggBaseModel, SharedModelMixin]] = model_.instance
                 entity = entity.inflate(data=dt_, model_hydrate=model_hydrate)
 
                 model_hydrate__ = tools_.insert_data(
                     entity=entity,
-                    on_conflict_ignore=False,
+                    on_conflict_ignore=self._insert_on_conflict_ignore,
                 )
 
                 if model_ is self._contract:
@@ -115,7 +101,7 @@ class ContractManagerService:
 
                 return model_hydrate__
 
-            def iterate_save(dt, model_):
+            def iterate_and_save(dt, model_):
                 for d in dt:
                     model_hydrate_ = save(d, model_)
                     if model not in edge_models_list:
@@ -126,24 +112,29 @@ class ContractManagerService:
                         schema_properties_ = glom(d, schema_property_.settings.document_path)
 
                         if schema_properties_:
-                            iterate_save(schema_properties_, schema_property_)
+                            iterate_and_save(schema_properties_, schema_property_)
 
-            iterate_save(data, model)
+            iterate_and_save(data, model)
 
-    def _create_if_not_exists(self, recreate_existing: bool = False) -> None:
+    def _create_ygg_db_if_not_exists(self) -> None:
         """Create the contract if it does not exist."""
 
         models_list = [self._contract, self._servers, self._schema, self._schema_property]
         for model in models_list:
-            tools = PhysicalModelTools(model=model.settings, db_path=self._db_url)
-            tools.create_schema()
-            tools.create_table(recreate_existing=recreate_existing)
+            tools = PhysicalModelTools(model=model.settings, ygg_db_url=self._ygg_db_url)
+            tools.create_table(
+                recreate_existing=self._recreate_existing,
+                enforce_create_schema_if_not_exists=self._enforce_create_schema_if_not_exists,
+            )
 
+    def build_contract(self) -> None:
+        """Build the contract by creating and populating the necessary models."""
 
-if __name__ == "__main__":
-    c = file_utils.get_yaml_content(
-        "/Users/thiagodias/Tad/projects/tyr/ygg/data/contracts/snowflake/organization_usage/input.yaml"
-    )
-
-    m = ContractManagerService(recreate_existing=True, contract_data=c)
-    m.build_contract()
+        self._get_contract_data()
+        self._database_persist_data_contract()
+        factory = YggFactory(
+            contract_id=self._contract_id,
+            contract_version=self._contract_version,
+            db_url=self._ygg_db_url,
+        )
+        factory.build_contract(sink_path=self._sink_path)

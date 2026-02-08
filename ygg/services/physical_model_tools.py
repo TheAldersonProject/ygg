@@ -5,7 +5,7 @@ from typing import Any, Type, Union
 
 import duckdb
 
-from ygg.core.dynamic_models_factory import ModelSettings, YggBaseModel
+from ygg.core.dynamic_odcs_models_factory import ModelSettings, YggBaseModel
 from ygg.helpers.physical_model import PhysicalModelHelper
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.utils.ygg_logs import get_logger
@@ -16,7 +16,7 @@ logs = get_logger()
 class PhysicalModelTools:
     """Tools for physical model operations."""
 
-    def __init__(self, model: ModelSettings, db_path: str = ":memory:") -> None:
+    def __init__(self, model: ModelSettings, ygg_db_url: str = ":memory:") -> None:
         logs.info("Initializing Physical Model Tools.")
 
         if not model:
@@ -25,7 +25,7 @@ class PhysicalModelTools:
         self._model: ModelSettings = model
         self._helper: PhysicalModelHelper = PhysicalModelHelper(model)
 
-        self._db_url: str = db_path
+        self._db_url: str = ygg_db_url
 
     def _execute(self, statement: str, validation_query_console: str | None = None) -> bool:
         """Execute a SQL statement against the database."""
@@ -48,7 +48,7 @@ class PhysicalModelTools:
                 logs.error(f"Error executing SQL statement: {e}")
                 raise e
 
-    def create_schema(self) -> None:
+    def _create_schema(self) -> None:
         """Create the schema for the physical model."""
 
         logs.info("Creating Schema.", schema=self._model.entity_schema)
@@ -61,9 +61,11 @@ class PhysicalModelTools:
 
         logs.info("Schema Created.", schema=self._model.entity_schema)
 
-    def create_table(self, recreate_existing: bool = False) -> bool:
+    def create_table(self, recreate_existing: bool = False, enforce_create_schema_if_not_exists: bool = True) -> bool:
         """Create the schema table for the physical model."""
 
+        if enforce_create_schema_if_not_exists:
+            self._create_schema()
         logs.info("Creating Table.", table=self._model.entity_name)
         schema_ddl: str = self._helper.get_create_table_ddl(recreate_existing=recreate_existing)
         validation_query: str = f"""

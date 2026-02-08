@@ -7,7 +7,7 @@ import duckdb
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from ygg.core.dynamic_models_factory import YggBaseModel
+from ygg.core.dynamic_odcs_models_factory import YggBaseModel
 
 base_url = "https://docs.snowflake.com/en/sql-reference"
 

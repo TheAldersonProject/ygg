@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-from ygg.services.contract_manager import ContractManagerService
+from ygg.services.data_contract_manager_service import DataContractManagerService
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -33,7 +33,7 @@ def main():
     # logs.debug("Data folder set.", args=args, data_folder=data_folder)
     # logs.debug("Destination set.", destination_path=data_folder or "Data will be saved in the current folder.")
 
-    manager = ContractManagerService(recreate_existing=args.recreate, contract_data=contract_data_path)
+    manager = DataContractManagerService(recreate_existing=args.recreate, contract_data=contract_data_path)
     manager.build_contract()
 
 

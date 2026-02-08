@@ -5,7 +5,7 @@ This module provides a factory class for creating Ygg objects based on configura
 
 from pathlib import Path
 
-from ygg.helpers.duck_db import DuckDbHelper
+from ygg.helpers.duckdb_helper import DuckDbHelper
 from ygg.helpers.ygg_models import TargetContractMap
 from ygg.services.physical_model_tools import PhysicalModelTools
 from ygg.utils.files_utils import save_yaml_content

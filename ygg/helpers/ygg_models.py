@@ -2,7 +2,7 @@
 
 from pydantic import Field
 
-from ygg.core.dynamic_models_factory import YggBaseModel
+from ygg.core.dynamic_odcs_models_factory import YggBaseModel
 
 
 class TargetContractSchemaPropertyMap(YggBaseModel):

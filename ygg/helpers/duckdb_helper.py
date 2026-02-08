@@ -52,18 +52,16 @@ class DuckDbHelper:
         db_path = self._db_out_path / db_file_name
         ddb = duckdb.connect(read_only=False, database=db_path)
 
-        ddb.execute("install ducklake")
-        ddb.execute("load ducklake")
-
-        dl_attach_stmt: str = f"""
-            ATTACH '{self._contract.catalog_schema.lower()}' (
-                TYPE ducklake,
-                METADATA_PATH '{self._db_in_path}',
-                DATA_PATH '{self._db_in_path}'
-            )
-        """
-        ddb.execute(dl_attach_stmt)
-
+        # ddb.execute("install ducklake")
+        # ddb.execute("load ducklake")
+        #
+        # dl_attach_stmt: str = f"""
+        #     ATTACH 'ducklake:{self._contract.catalog.lower()}.{self._contract.catalog_schema.lower()}' as {self._catalog_schema.lower()} (
+        #         TYPE ducklake,
+        #         DATA_PATH '{self._db_in_path}'
+        #     )
+        # """
+        # ddb.execute(dl_attach_stmt)
         ddb.execute(self._get_ddl_create_catalog_schema())
 
         logs.debug("Database Created.", db_path=str(db_path))

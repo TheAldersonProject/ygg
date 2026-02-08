@@ -1,11 +1,11 @@
 """Project configuration."""
 
+from enum import Enum
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from ygg.utils import files_utils
 from ygg.utils.custom_decorators import singleton
 from ygg.utils.files_utils import replace_placeholders_with_env_values
 
@@ -29,14 +29,58 @@ ASSETS_FOLDER = SRC_FOLDER / "assets"
 ODCS_SCHEMA_FOLDER = ASSETS_FOLDER / "odcs_schemas"
 YGG_SCHEMAS_FOLDER = ASSETS_FOLDER / "ygg_schemas"
 
-YGG_SCHEMA_CONFIG_FILE = YGG_SCHEMAS_FOLDER / "config.yaml"
+YGG_SCHEMA_CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 
 
-class YggSinkConfig(BaseModel):
+class YggBaseConfig(BaseModel):
+    """Base configuration model for Ygg."""
+
+    model_config = ConfigDict(use_enum_values=True)
+
+
+class DuckLakeMetadataRepository(Enum):
+    """DuckLake Metadata Repository"""
+
+    DUCKLAKE = "ducklake"
+    POSTGRES = "postgres"
+
+
+class DuckLakeRepository(Enum):
+    """DuckLake Repository"""
+
+    S3 = "s3"
+    LOCAL = "local"
+
+
+class YggRepositoryConfiguration(YggBaseConfig):
+    """Ygg Repository"""
+
+    repository: str = Field(..., description="Repository name")
+    ducklake_repository_data_location: str | Path = Field(..., description="Repository location")
+    ducklake_metadata_repository: DuckLakeMetadataRepository = Field(
+        ...,
+        description="Metadata repository technology, must be of type YggMetadataRepository",
+    )
+    ducklake_repository: DuckLakeRepository = Field(
+        ...,
+        description="Repository technology, must be of type YggRepository",
+    )
+
+
+class YggS3Config(YggBaseConfig):
+    """S3 Config"""
+
+    endpoint_url: str = Field(..., description="S3 endpoint url")
+    aws_access_key_id: str = Field(..., description="AWS access key id")
+    aws_secret_access_key: str = Field(..., description="AWS secret access key")
+    region_name: str = Field(..., description="AWS region name")
+
+
+class YggSinkConfig(YggBaseConfig):
     location: Path = Field(..., description="Path sink the implementation")
 
 
-class YggDatabaseConfig(BaseModel):
+class YggDatabaseConfig(YggBaseConfig):
     database: str = Field(..., description="Database name")
     database_extension: str = Field(..., description="Database extension, e.g. .db or .duckdb")
     environment: Literal["dev", "prod"] = Field(..., description="Environment name")
@@ -64,29 +108,44 @@ class YggDatabaseConfig(BaseModel):
 class YggSetup:
     """Ygg Setup."""
 
-    def __init__(self, create_ygg_folders: bool = True):
+    def __init__(self, create_ygg_folders: bool = True, config_data: dict[str, str | Any] | None = None):
         """Initialize the Ygg Setup."""
 
         self._create_ygg_folders = create_ygg_folders
-        self._config = self._get_config()
+        self._config = self._get_config(config_data)
 
-        self._sink_config = self._ygg_sink_config()
-        self._database_config = self._ygg_database_config()
-
-        self._ygg_sink_config: YggDatabaseConfig | None = None
+        self._sink_config: YggSinkConfig = self._ygg_sink_config()
+        self._database_config: YggDatabaseConfig = self._ygg_database_config()
 
     @staticmethod
     def _create_folder(folder: Path) -> None:
         """Create the folders."""
+
         folder.mkdir(parents=True, exist_ok=True)
 
     @property
     def database_config(self) -> YggDatabaseConfig:
+        """Get the Database Config."""
+
         return self._database_config
 
     @property
     def sink_config(self) -> YggSinkConfig:
+        """Get the Sink Config."""
+
         return self._sink_config
+
+    @property
+    def ygg_repository_config(self) -> YggRepositoryConfiguration:
+        """Get the Ygg Repository Config."""
+
+        return YggRepositoryConfiguration(**self._config.get("ygg-repository-config", {}))
+
+    @property
+    def ygg_s3_config(self) -> YggS3Config:
+        """Get the Ygg Repository Config."""
+
+        return YggS3Config(**self._config.get("ygg-s3-config", {}))
 
     def _ygg_database_config(self) -> YggDatabaseConfig:
         """Get the Ygg Database Config."""
@@ -102,6 +161,8 @@ class YggSetup:
         return db_config
 
     def _ygg_sink_config(self) -> YggSinkConfig:
+        """Get the Ygg Sink Config."""
+
         ygg_sink_config = self._config.get("ygg-sink-config", {})
 
         if not ygg_sink_config:
@@ -114,18 +175,10 @@ class YggSetup:
         return sink_config
 
     @staticmethod
-    def _get_config() -> dict[str, str | Any]:
+    def _get_config(config_data) -> dict[str, str | Any]:
         """Get the configuration."""
-        with open("config.yaml", "r") as f:
-            config = files_utils.get_yaml_content(f.name)
 
+        config = config_data
         config = replace_placeholders_with_env_values(config)
+
         return config
-
-
-if __name__ == "__main__":
-    s = YggSetup()
-    print(s.database_config)
-    print(s.database_config.database_url)
-    print(s.sink_config)
-    print(s.sink_config.location)

@@ -1,0 +1,34 @@
+name: ygg
+services:
+    rustfs:
+        container_name: rustfs
+        ports:
+            - 9000:9000
+            - 9001:9001
+        volumes:
+            - /Users/thiagodias/Tad/projects/tyr/rustfs:/data
+        environment:
+          - RUSTFS_ACCESS_KEY=rustfsadmin
+          - RUSTFS_SECRET_KEY=rustfsadmin
+          - RUSTFS_CONSOLE_ENABLE=true
+        command: >
+          --address :9000
+          --console-enable
+          --access-key rustfsadmin
+          --secret-key rustfsadmin
+          /data
+        image: rustfs/rustfs:latest
+    postgres:
+        container_name: catalog
+        image: postgres:18
+        ports:
+            - 5432:5432
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=postgres
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+volumes:
+    postgres_data:

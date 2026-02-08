@@ -4,7 +4,7 @@ import re
 import textwrap
 from typing import Any
 
-from ygg.core.dynamic_models_factory import ModelSettings
+from ygg.core.dynamic_odcs_models_factory import ModelSettings
 from ygg.helpers.data_types import get_data_type
 from ygg.utils.ygg_logs import get_logger
 
