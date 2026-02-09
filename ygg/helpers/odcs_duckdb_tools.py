@@ -47,7 +47,7 @@ class DuckDbTools:
                 raise e
 
     @staticmethod
-    def execute_receipts(db_url: str, receipt: list[str] | str) -> None:
+    def execute_instructions(db_url: str, receipt: list[str] | str) -> None:
         """Execute a list of SQL statements against the database."""
 
         if not receipt:

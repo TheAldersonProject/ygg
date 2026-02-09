@@ -1,55 +1,18 @@
 """Set of tools to interact with DuckDb and DuckLake."""
 
-from enum import Enum
 from typing import Any
 
-from pydantic import Field
-
 import ygg.helpers.data_types as data_types
-from ygg.helpers.logical_data_models import YggBaseModel
+from ygg.config import YggSetup
+from ygg.helpers.logical_data_models import (
+    DuckLakeDbEntity,
+    DuckLakeDbEntityColumn,
+    DuckLakeDbEntityColumnDataType,
+    DuckLakeDbEntityType,
+)
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
-
-
-class DuckLakeDbEntityType(Enum):
-    """Entity Types"""
-
-    DUCKDB = "duckdb"
-    DUCKLAKE = "ducklake"
-
-
-class DuckLakeDbEntityColumnDataType(YggBaseModel):
-    """DuckLake Db Entity Column Data Type"""
-
-    data_type_name: str = Field(..., description="Column data type")
-    duck_db_type: str = Field(..., description="DuckDb data type")
-    duck_db_regex_pattern: str | None = Field(default=None, description="DuckDb regex pattern")
-    duck_lake_type: str = Field(..., description="DuckLake data type")
-
-
-class DuckLakeDbEntityColumn(YggBaseModel):
-    """DuckLake Db Entity Column"""
-
-    name: str = Field(..., description="Column name")
-    data_type: DuckLakeDbEntityColumnDataType = Field(..., description="Column data type")
-    enum: list | None = Field(default=None)
-    comment: str | None = Field(default=None, description="Column comment")
-    nullable: bool | None = Field(default=False, description="Whether the column can be null")
-    primary_key: bool | None = Field(default=False, description="Whether the column is a primary key")
-    unique_key: bool | None = Field(default=False, description="Whether the column is a unique key")
-    check_constraint: str | None = Field(default=None, description="Check constraint")
-    default_value: str | Any | None = Field(default=None, description="Default value")
-    default_value_function: str | None = Field(default=None, description="Database function for default value")
-
-
-class DuckLakeDbEntity(YggBaseModel):
-    """DuckLake Db Entity"""
-
-    name: str = Field(..., description="Entity name")
-    schema: str = Field(..., description="Entity schema name")
-    comment: str | None = Field(default=None, description="Entity comment")
-    columns: list[DuckLakeDbEntityColumn] | None = Field(default=None, description="Entity list of columns")
 
 
 class DuckLakeDbTools:
@@ -72,27 +35,31 @@ class DuckLakeDbTools:
             recreate_existing=recreate_existing_entity,
         )
 
-        self._duck_lake_receipts: list[str] | None = None
-        self._duck_db_receipts: list[str] | None = None
+        self._duck_lake_instructions_map: dict[str, Any] | None = None
+        self._duck_db_instructions_map: dict[str, Any] | None = None
+        self._duck_lake_instructions_list: list[str] | None = None
+        self._duck_db_instructions_list: list[str] | None = None
+        self._setup = YggSetup(create_ygg_folders=False, config_data=None)
+        self._duck_lake_catalog: str = self._setup.ygg_config.lake_alias  # type: ignore
 
         self._create_duck_db_entity()
         self._create_duck_lake_entity()
 
     @property
-    def duck_lake_receipt(self) -> list[str]:
+    def duck_lake_instructions(self) -> list[str]:
         """Get the DuckLake receipts."""
-        if not self._duck_lake_receipts:
+        if not self._duck_lake_instructions_list:
             raise ValueError("No DuckLake receipts found.")
 
-        return self._duck_lake_receipts
+        return self._duck_lake_instructions_list
 
     @property
-    def duck_db_receipt(self) -> list[str]:
+    def duck_db_instructions(self) -> list[str]:
         """Get the DuckDb receipts."""
-        if not self._duck_db_receipts:
+        if not self._duck_db_instructions_list:
             raise ValueError("No DuckDb receipts found.")
 
-        return self._duck_db_receipts
+        return self._duck_db_instructions_list
 
     @staticmethod
     def _get_data_type(data_type_name: str) -> DuckLakeDbEntityColumnDataType:
@@ -219,33 +186,46 @@ class DuckLakeDbTools:
 
         return columns_definition, columns_comments_definition, primary_key_columns
 
-    def _get_entity_schema_spec(self) -> str:
+    def _get_entity_schema_spec(self, entity_type: DuckLakeDbEntityType) -> str:
         """Return the entity schema spec."""
 
+        ducklake_catalog = ""
+        if entity_type == DuckLakeDbEntityType.DUCKLAKE:
+            ducklake_catalog: str = f"{self._duck_lake_catalog}."
+
         entity_schema_name = self._entity_schema_name
-        entity_schema_spec = f"CREATE SCHEMA IF NOT EXISTS {entity_schema_name};"
+        entity_schema_spec = f"CREATE SCHEMA IF NOT EXISTS {ducklake_catalog}{entity_schema_name};"
 
         logs.debug("Entity Schema Spec", spec=entity_schema_spec)
 
         return entity_schema_spec
 
-    def _get_create_entity_header(self) -> str:
+    def _get_create_entity_header(self, entity_type: DuckLakeDbEntityType) -> str:
         """Return the creation statement of the entity header."""
 
         create_or_replace: str = "CREATE OR REPLACE TABLE"
         create_if_not_exists: str = "CREATE TABLE IF NOT EXISTS"
-        create_table_header: str = create_if_not_exists if not self._recreate_existing_database else create_or_replace
-        entity_name = f"{create_table_header} {self._entity_schema_name.upper()}.{self._model.name.lower()}"
 
-        return entity_name
+        ducklake_catalog = ""
+        if entity_type == DuckLakeDbEntityType.DUCKLAKE:
+            ducklake_catalog: str = f"{self._duck_lake_catalog}."
+
+        create_table_header: str = create_if_not_exists if not self._recreate_existing_database else create_or_replace
+        entity_header = (
+            f"{create_table_header} {ducklake_catalog}{self._entity_schema_name.upper()}.{self._model.name.lower()}"
+        )
+
+        logs.debug("Entity Creation Header", header=entity_header)
+
+        return entity_header
 
     def _get_entity_spec(self, entity_type: DuckLakeDbEntityType) -> str:
         """Create entities in DuckLake"""
 
-        if not self._duck_db_receipts:
-            self._duck_db_receipts = []
+        if not self._duck_db_instructions_list:
+            self._duck_db_instructions_list = []
 
-        header = self._get_create_entity_header()
+        header = self._get_create_entity_header(entity_type=entity_type)
         columns, columns_comments, primary_key = self._get_entity_columns_definition(entity_type)
 
         stmt: str = f"{header} (\n{columns}\n);"
@@ -254,15 +234,19 @@ class DuckLakeDbTools:
     def _create_duck_lake_entity(self) -> None:
         """Create entities in DuckDb"""
 
-        if not self._duck_lake_receipts:
-            self._duck_lake_receipts = []
+        if not self._duck_lake_instructions_list:
+            self._duck_lake_instructions_list = []
 
-        s3_secret = """
-        CREATE OR REPLACE SECRET rustfs_secret (
+        general_config = self._setup.ygg_config
+        object_storage_config = self._setup.ygg_s3_config
+        catalog_database_config = self._setup.ygg_catalog_database_config
+
+        s3_secret = f"""
+        CREATE OR REPLACE SECRET object_storage_secret (
             TYPE S3,
-            KEY_ID 'tKpIEv0on3OBmGPhgjlT',
-            SECRET 'tMvVHYPsXIKd7xSDRn3lj28G5pZNBaQbgAcfk4rw',
-            ENDPOINT 'localhost:9000',
+            KEY_ID '{object_storage_config.aws_secret_access_key}',
+            SECRET '{object_storage_config.aws_secret_access_key}',
+            ENDPOINT '{object_storage_config.endpoint_url}',
             URL_STYLE 'path',
             USE_SSL false
         );
@@ -274,27 +258,37 @@ class DuckLakeDbTools:
             "install httpfs;",
             "load ducklake;",
             "load postgres;",
-            "LOAD httpfs;",
+            "load httpfs;",
             s3_secret,
-            """
-            ATTACH 'ducklake:postgres:dbname=ducklake_catalog host=localhost user=postgres password=postgres port=5432' 
-              AS ygg_ducklake 
-              (DATA_PATH 's3://repository/', override_data_path true);
+            f"""
+            ATTACH 'ducklake:postgres:dbname={catalog_database_config.database} 
+                host={catalog_database_config.host} 
+                user={catalog_database_config.user} 
+                password={catalog_database_config.password} 
+                port={catalog_database_config.port}' 
+                AS {self._duck_lake_catalog}
+                (DATA_PATH 's3://{general_config.repository}/', override_data_path true);
             """,
-            "use ygg_ducklake;",
         ]
 
         create_entity_stmt, columns_comments = self._get_entity_spec(entity_type=DuckLakeDbEntityType.DUCKLAKE)
-        self._duck_lake_receipts.extend(ducklake_instructions)
-        self._duck_lake_receipts.append(self._get_entity_schema_spec())
-        self._duck_lake_receipts.append(create_entity_stmt)
+        create_schema_stmt = self._get_entity_schema_spec(entity_type=DuckLakeDbEntityType.DUCKLAKE)
+        self._duck_lake_instructions_list.extend(ducklake_instructions)
+        self._duck_lake_instructions_list.append(create_schema_stmt)
+        self._duck_lake_instructions_list.append(create_entity_stmt)
+
+        self._duck_lake_instructions_map = {
+            "infra": ducklake_instructions,
+            "schema": create_schema_stmt,
+            "entity": create_entity_stmt,
+        }
 
     def _create_duck_db_entity(self) -> None:
         """Create entities in DuckDb"""
 
-        if not self._duck_lake_receipts:
-            self._duck_lake_receipts = []
+        if not self._duck_lake_instructions_list:
+            self._duck_lake_instructions_list = []
 
         create_entity_stmt, columns_comments = self._get_entity_spec(entity_type=DuckLakeDbEntityType.DUCKDB)
-        self._duck_db_receipts.append(self._get_entity_schema_spec())
-        self._duck_db_receipts.append(create_entity_stmt)
+        self._duck_db_instructions_list.append(self._get_entity_schema_spec(entity_type=DuckLakeDbEntityType.DUCKDB))
+        self._duck_db_instructions_list.append(create_entity_stmt)

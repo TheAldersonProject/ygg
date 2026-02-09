@@ -1,3 +1,8 @@
+ygg-config:
+  environment: ${YGG_ENVIRONMENT}
+  repository: ${YGG_REPOSITORY_NAME}
+  lake_alias: ${YGG_DUCKLAKE_ALIAS}
+
 ygg-database-config:
   database: ${YGG_DATABASE_NAME}
   database_extension: ${YGG_DATABASE_EXTENSION}
@@ -6,10 +11,11 @@ ygg-database-config:
   data_location: ${YGG_DATA_LOCATION}
 
 ygg-metadata-catalog-database-config:
-  database: ${YGG_CATALOG_DATABASE_NAME}
-  database_extension: ${YGG_CATALOG_DATABASE_EXTENSION}
-  database_location: ${YGG_CATALOG_DATABASE_LOCATION}
-  environment: ${YGG_CATALOG_DATABASE_ENVIRONMENT}
+  host: ${YGG_CATALOG_HOST}
+  port: ${YGG_CATALOG_HOST_PORT}
+  database: ${YGG_CATALOG_DATABASE}
+  user: ${YGG_CATALOG_DATABASE_USER}
+  password: ${YGG_CATALOG_DATABASE_PASSWORD}
 
 ygg-sink-config:
   location: ${YGG_SINK_LOCATION}

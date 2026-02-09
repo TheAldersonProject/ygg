@@ -2,7 +2,7 @@
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -55,9 +55,7 @@ class YggRepositoryConfiguration(YggBaseConfig):
     """Ygg Repository"""
 
     repository: str = Field(..., description="Repository name")
-    ducklake_repository_data_location: str | Path = Field(
-        ..., description="Repository location"
-    )
+    ducklake_repository_data_location: str | Path = Field(..., description="Repository location")
     ducklake_metadata_repository: DuckLakeMetadataRepository = Field(
         ...,
         description="Metadata repository technology, must be of type YggMetadataRepository",
@@ -81,19 +79,21 @@ class YggSinkConfig(YggBaseConfig):
     location: Path = Field(..., description="Path sink the implementation")
 
 
+class YggGeneralConfiguration(YggBaseConfig):
+    environment: str = Field(..., description="Environment name.", examples=["dev", "prod"])
+    repository: str = Field(..., description="Repository name.")
+    lake_alias: str = Field(..., description="DuckLake alias.")
+
+
 class YggDatabaseConfig(YggBaseConfig):
     database: str = Field(..., description="Database name")
-    database_extension: str = Field(
-        ..., description="Database extension, e.g. .db or .duckdb"
-    )
-    environment: Literal["dev", "prod"] = Field(..., description="Environment name")
+    database_extension: str = Field(..., description="Database extension, e.g. .db or .duckdb")
     database_location: Path = Field(..., description="Path to the database")
     data_location: Path = Field(..., description="Path to store the data")
 
     @model_validator(mode="after")
     def validate_and_overwrite_deterministically(self):
         """Validate and overwrite deterministically."""
-        self.environment = self.environment.strip().lower()
         self.database = self.database.strip().lower()
         self.database_extension = self.database_extension.strip().lower()
 
@@ -103,12 +103,16 @@ class YggDatabaseConfig(YggBaseConfig):
     def database_url(self) -> Path:
         """Get the database URL."""
 
-        database_name = (
-            f"{self.database}.{self.database_extension}"
-            if self.database_extension
-            else self.database
-        )
+        database_name = f"{self.database}.{self.database_extension}" if self.database_extension else self.database
         return self.database_location / database_name
+
+
+class YggCatalogDatabaseConfig(YggBaseConfig):
+    host: str = Field(..., description="Database host name")
+    port: str = Field(..., description="Database host name")
+    database: str = Field(..., description="Database catalog name")
+    user: str = Field(..., description="Database user name")
+    password: str = Field(..., description="Database user password")
 
 
 @singleton
@@ -151,9 +155,13 @@ class YggSetup:
     def ygg_repository_config(self) -> YggRepositoryConfiguration:
         """Get the Ygg Repository Config."""
 
-        return YggRepositoryConfiguration(
-            **self._config.get("ygg-repository-config", {})
-        )
+        return YggRepositoryConfiguration(**self._config.get("ygg-repository-config", {}))
+
+    @property
+    def ygg_config(self) -> YggRepositoryConfiguration:
+        """Get the Ygg General Config."""
+
+        return YggGeneralConfiguration(**self._config.get("ygg-config", {}))
 
     @property
     def ygg_s3_config(self) -> YggS3Config:
@@ -166,14 +174,23 @@ class YggSetup:
         ygg_database_config = self._config.get("ygg-database-config", {})
 
         if not ygg_database_config:
-            raise ValueError(
-                "Ygg Database Config not found. Please check the config.yaml file."
-            )
+            raise ValueError("Ygg Database Config not found. Please check the config.yaml file.")
 
         db_config = YggDatabaseConfig(**ygg_database_config)
         if self._create_ygg_folders:
             self._create_folder(db_config.database_location)
 
+        return db_config
+
+    @property
+    def ygg_catalog_database_config(self) -> YggCatalogDatabaseConfig:
+        """Get the Ygg Catalog Database Config."""
+
+        ygg_database_config = self._config.get("ygg-metadata-catalog-database-config", {})
+        if not ygg_database_config:
+            raise ValueError("Ygg Catalog Database Config not found. Please check the config.yaml file.")
+
+        db_config = YggCatalogDatabaseConfig(**ygg_database_config)
         return db_config
 
     def _ygg_sink_config(self) -> YggSinkConfig:
@@ -182,9 +199,7 @@ class YggSetup:
         ygg_sink_config = self._config.get("ygg-sink-config", {})
 
         if not ygg_sink_config:
-            raise ValueError(
-                "Ygg Sink Config not found. Please check the config.yaml file."
-            )
+            raise ValueError("Ygg Sink Config not found. Please check the config.yaml file.")
 
         sink_config = YggSinkConfig(**ygg_sink_config)
         if self._create_ygg_folders:

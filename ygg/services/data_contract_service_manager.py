@@ -85,8 +85,6 @@ class DataContractServiceManager:
         edge_models_list = [self._schema_property]
         model_hydrate: dict = {}
 
-        self._create_ygg_db_if_not_exists()
-
         for model in models_list:
             data = glom(self._contract_data, model.settings.document_path)
 
@@ -181,8 +179,13 @@ class DataContractServiceManager:
             )
             db_url = f"{db_config.database_location}/{db_config.database}.{db_config.database_extension}"
 
-            DuckDbTools.execute_receipts(db_url=db_url, receipt=t.duck_db_receipt)
-            DuckDbTools.execute_receipts(db_url=db_url, receipt=t.duck_lake_receipt)
+            DuckDbTools.execute_instructions(db_url=db_url, receipt=t.duck_db_instructions)
+            DuckDbTools.execute_instructions(db_url=db_url, receipt=t.duck_lake_instructions)
+
+    def build(self) -> None:
+        """Build the contract database assets."""
+
+        self._create_ygg_db_if_not_exists()
 
     def build_contract(self) -> None:
         """Build the contract by creating and populating the necessary models."""

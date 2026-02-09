@@ -12,7 +12,6 @@ load_dotenv()
 
 
 def main():
-    # def main2():
     parser = argparse.ArgumentParser(description="Ygg Starter")
 
     parser.add_argument(
@@ -21,34 +20,23 @@ def main():
         action="store_true",
         help="Recreate all database objects in the database.",
     )
-    parser.add_argument("-f", "--file", "--contract", required=True, help="Path to the contract file.")
-    # parser.add_argument("-o", "--output", help="Path to the output folder.")
+    parser.add_argument("-f", "--file", "--contract", help="Path to the contract file.")
+    parser.add_argument("-c", "--create-db", action="store_true", help="Create the Ygg database.")
 
     args = parser.parse_args()
-
-    # data_folder = os.getenv("DATA_FOLDER", None)
-    # ygg_database_output_folder = os.getenv("YGG_DATABASE_OUTPUT_FOLDER", None)
     contracts_input_folder = os.getenv("CONTRACTS_INPUT_FOLDER", None)
 
-    if contracts_input_folder:
+    contract_data_path = None
+    if contracts_input_folder and args.file:
         contracts_input_folder = contracts_input_folder + "/"
-
-    contract_data_path = contracts_input_folder + args.file
-
-    # logs.debug("Data folder set.", args=args, data_folder=data_folder)
-    # logs.debug("Destination set.", destination_path=data_folder or "Data will be saved in the current folder.")
+        contract_data_path = contracts_input_folder + args.file
 
     manager = DataContractServiceManager(recreate_existing=args.recreate, contract_data=contract_data_path)
-    manager.build_contract()
+    if args.create_db:
+        manager.build()
 
-
-#
-#
-# def main():
-#     parser = argparse.ArgumentParser(description="Ygg Starter")
-#     parser.add_argument("type", help="Recreate all database objects in the database.")
-#     parser.add_argument("-f", "--file", "--contract", required=True, help="Path to the contract file.")
-#     # parser.add_argument("-d", "--db", "--database", default="database.duckdb", help="Database name.")
+    if args.file:
+        manager.build_contract()
 
 
 if __name__ == "__main__":
