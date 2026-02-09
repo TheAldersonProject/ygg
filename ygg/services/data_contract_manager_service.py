@@ -13,6 +13,13 @@ from ygg.core.dynamic_odcs_models_factory import (
     YggBaseModel,
 )
 from ygg.core.dynamic_ygg_models_factory import YggFactory
+from ygg.helpers.data_types import get_data_type
+from ygg.helpers.duck_lake_db_tools import (
+    DuckLakeDbEntity,
+    DuckLakeDbEntityColumn,
+    DuckLakeDbEntityColumnDataType,
+    DuckLakeDbTools,
+)
 from ygg.helpers.logical_data_models import SharedModelMixin
 from ygg.helpers.odcs_duckdb_tools import DuckDbTools
 from ygg.utils.ygg_logs import get_logger
@@ -120,6 +127,40 @@ class DataContractManagerService:
 
             iterate_and_save(data, model)
 
+    @staticmethod
+    def _cast_to_duck_lake_db_entity(model) -> DuckLakeDbEntity:
+        """Cast the model to a DuckLakeDbEntity."""
+
+        list_of_columns: list[DuckLakeDbEntityColumn] = []
+        for property_ in model.properties:
+            data_type = get_data_type(property_.type, "physical")
+            column_data_type = DuckLakeDbEntityColumnDataType(
+                data_type_name=property_.type,
+                duck_db_type=data_type["type"],
+                duck_db_regex_pattern=data_type.get("pattern", None),
+                duck_lake_type=data_type["type"],
+            )
+
+            c: DuckLakeDbEntityColumn = DuckLakeDbEntityColumn(
+                name=property_.name,
+                data_type=column_data_type,
+                enum=property_.enum,
+                comment=property_.description,
+                nullable=property_.required,
+                primary_key=property_.primary_key,
+                unique_key=property_.unique,
+                check_constraint=None,
+                default_value=property_.default if property_.default and property_.default != ... else None,
+                default_value_function=property_.physical_default_function,
+            )
+            list_of_columns.append(c)
+
+        _duck_lake_db_entity: DuckLakeDbEntity = DuckLakeDbEntity(
+            name=model.entity_name, columns=list_of_columns, schema=model.entity_schema
+        )
+
+        return _duck_lake_db_entity
+
     def _create_ygg_db_if_not_exists(self) -> None:
         """Create the contract if it does not exist."""
 
@@ -129,12 +170,13 @@ class DataContractManagerService:
             self._schema,
             self._schema_property,
         ]
+
         for model in models_list:
-            tools = DuckDbTools(model=model.settings, ygg_db_url=self._ygg_db_url)
-            tools.create_table(
-                recreate_existing=self._recreate_existing,
-                enforce_create_schema_if_not_exists=self._enforce_create_schema_if_not_exists,
-            )
+            t = DuckLakeDbTools(model=self._cast_to_duck_lake_db_entity(model.settings), recreate_existing_entity=True)
+            for l in t.duck_lake_receipt:
+                print(l)
+            for l in t.duck_db_receipt:
+                print(l)
 
     def build_contract(self) -> None:
         """Build the contract by creating and populating the necessary models."""

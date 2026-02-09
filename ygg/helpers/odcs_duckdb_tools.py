@@ -7,7 +7,6 @@ import duckdb
 
 from ygg.core.dynamic_odcs_models_factory import ModelSettings, YggBaseModel
 from ygg.helpers.logical_data_models import SharedModelMixin
-from ygg.helpers.odcs_physical_model import OdcsPhysicalModel
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -23,13 +22,9 @@ class DuckDbTools:
             raise ValueError("Ygg Model Cannot be Empty.")
 
         self._model: ModelSettings = model
-        self._helper: OdcsPhysicalModel = OdcsPhysicalModel(model)
-
         self._db_url: str = ygg_db_url
 
-    def _execute(
-        self, statement: str, validation_query_console: str | None = None
-    ) -> bool:
+    def _execute(self, statement: str, validation_query_console: str | None = None) -> bool:
         """Execute a SQL statement against the database."""
 
         with duckdb.connect(self._db_url, read_only=False) as con:
@@ -46,47 +41,31 @@ class DuckDbTools:
                         logs.error(f"Error executing validation query: {e}")
 
                 return True
+
             except Exception as e:
                 logs.error(f"Error executing SQL statement: {e}")
                 raise e
 
-    def _create_schema(self) -> None:
-        """Create the schema for the physical model."""
+    @staticmethod
+    def execute_receipts(db_url: str, receipt: list[str] | str) -> None:
+        """Execute a list of SQL statements against the database."""
 
-        logs.info("Creating Schema.", schema=self._model.entity_schema)
-        schema_ddl: str = self._helper.get_create_schema_ddl()
-        schema_name = self._model.entity_schema.upper()
+        if not receipt:
+            raise ValueError("Receipt cannot be empty.")
 
-        validation_query: str = "SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE UPPER(schema_name) = '{schema_name}';"
-        validation_query = validation_query.format(schema_name=schema_name)
-        self._execute(schema_ddl, validation_query_console=validation_query)
+        if isinstance(receipt, str):
+            receipt = [receipt]
 
-        logs.info("Schema Created.", schema=self._model.entity_schema)
+        with duckdb.connect(db_url, read_only=False) as con:
+            try:
+                for statement in receipt:
+                    logs.debug("Executing SQL statement.")
+                    con.execute(statement)
+                    logs.debug("SQL statement executed successfully.")
 
-    def create_table(
-        self,
-        recreate_existing: bool = False,
-        enforce_create_schema_if_not_exists: bool = True,
-    ) -> bool:
-        """Create the schema table for the physical model."""
-
-        if enforce_create_schema_if_not_exists:
-            self._create_schema()
-        logs.info("Creating Table.", table=self._model.entity_name)
-        schema_ddl: str = self._helper.get_create_table_ddl(
-            recreate_existing=recreate_existing
-        )
-        validation_query: str = f"""
-            DESC TABLE {self._model.entity_schema.upper()}.{self._model.entity_name.upper()};
-        """
-        self._execute(schema_ddl, validation_query_console=validation_query)
-        table_comments: list[str] = self._helper.get_table_columns_comments()
-        if table_comments:
-            self._execute("\n".join(table_comments))
-            logs.info("Table Comments Created.")
-
-        logs.info("Table Created.")
-        return True
+            except Exception as e:
+                logs.error(f"Error executing SQL statement: {e}")
+                raise e
 
     def insert_data(
         self,
@@ -105,27 +84,15 @@ class DuckDbTools:
 
         empties_ = [k for k, v in values_map.items() if v in (None, "None", "")]
         drop_columns: list = [
-            c.name
-            for c in self._model.properties
-            if c.skip_from_physical_model or c.name in empties_
+            c.name for c in self._model.properties if c.skip_from_physical_model or c.name in empties_
         ]
         for drop in drop_columns or []:
             if drop in values_map:
                 del values_map[drop]
 
-        signature_skip_columns = [
-            c.name for c in self._model.properties if c.skip_from_signature
-        ]
+        signature_skip_columns = [c.name for c in self._model.properties if c.skip_from_signature]
         values_signature = "".join(
-            list(
-                sorted(
-                    [
-                        str(v)
-                        for k, v in values_map.items()
-                        if v and k not in signature_skip_columns
-                    ]
-                )
-            )
+            list(sorted([str(v) for k, v in values_map.items() if v and k not in signature_skip_columns]))
         )
 
         record_hash = str(hashlib.md5(str(values_signature).encode()).hexdigest())
@@ -135,9 +102,7 @@ class DuckDbTools:
         for pk in pk_columns:
             hydrate_return[f"{entity_name}_{pk}"] = values_map.get(pk)
 
-        header: list[str] = [
-            f for f in list(entity.model_fields.keys()) if f in list(values_map.keys())
-        ]
+        header: list[str] = [f for f in list(entity.model_fields.keys()) if f in list(values_map.keys())]
         params: list[str] = ", ".join(["?" for f in header])
         header_string: str = ", ".join(header)
 
