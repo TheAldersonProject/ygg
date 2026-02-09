@@ -20,7 +20,7 @@ services:
         image: rustfs/rustfs:latest
     postgres:
         container_name: catalog
-        image: postgres:18
+        image: postgres:17
         ports:
             - 5432:5432
         environment:

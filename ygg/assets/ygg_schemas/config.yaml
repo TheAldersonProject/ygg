@@ -16,7 +16,7 @@ commons:
     primary_key: true
     unique: true
     skip_from_signature: true
-  - name: record_creation_ts
+  - name: record_creation_ets
     type: integer
     description: Timestamp of the creation of the record.
     alias: recordCreationTs
@@ -26,7 +26,7 @@ commons:
     skip_from_signature: true
     default: null
     physical_default_function: "epoch_ns(get_current_timestamp())"
-  - name: record_status_ts
+  - name: record_status_ets
     type: integer
     description: Timestamp of the status change of the record.
     alias: recordStatusTs

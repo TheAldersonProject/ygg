@@ -64,7 +64,7 @@ class DuckLakeDbTools:
 
         self._model: DuckLakeDbEntity = model
         self._entity_schema_name = model.schema.upper()
-        self._recreate_existing_database: bool = recreate_existing_entity
+        self._recreate_existing_database: bool = recreate_existing_entity or False
         logs.info(
             "Initializing Duck Lake & Db Tools module.",
             model=self._model.name,
@@ -132,7 +132,7 @@ class DuckLakeDbTools:
 
         elif entity_type == DuckLakeDbEntityType.DUCKDB:
             default_value: str = ""
-            nullable: str = "" if column.nullable else " NOT NULL"
+            nullable: str = "" if not column.nullable else " NOT NULL"
 
             if column.enum:
                 data_type: str = f""" ENUM({", ".join(["'" + enum_ + "'" for enum_ in column.enum])}) """
@@ -147,7 +147,7 @@ class DuckLakeDbTools:
                     )
                     check_constraint = f" CHECK ({column_check_constraint})"
 
-            if column.default_value:
+            if column.default_value or column.default_value_function:
                 if data_type.upper() in (
                     "TIMESTAMP",
                     "TIMESTAMPTZ",
@@ -234,7 +234,7 @@ class DuckLakeDbTools:
 
         create_or_replace: str = "CREATE OR REPLACE TABLE"
         create_if_not_exists: str = "CREATE TABLE IF NOT EXISTS"
-        create_table_header: str = create_if_not_exists if self._recreate_existing_database else create_or_replace
+        create_table_header: str = create_if_not_exists if not self._recreate_existing_database else create_or_replace
         entity_name = f"{create_table_header} {self._entity_schema_name.upper()}.{self._model.name.lower()}"
 
         return entity_name
@@ -257,7 +257,35 @@ class DuckLakeDbTools:
         if not self._duck_lake_receipts:
             self._duck_lake_receipts = []
 
+        s3_secret = """
+        CREATE OR REPLACE SECRET rustfs_secret (
+            TYPE S3,
+            KEY_ID 'tKpIEv0on3OBmGPhgjlT',
+            SECRET 'tMvVHYPsXIKd7xSDRn3lj28G5pZNBaQbgAcfk4rw',
+            ENDPOINT 'localhost:9000',
+            URL_STYLE 'path',
+            USE_SSL false
+        );
+        """
+
+        ducklake_instructions: list[str] = [
+            "install ducklake;",
+            "install postgres;",
+            "install httpfs;",
+            "load ducklake;",
+            "load postgres;",
+            "LOAD httpfs;",
+            s3_secret,
+            """
+            ATTACH 'ducklake:postgres:dbname=ducklake_catalog host=localhost user=postgres password=postgres port=5432' 
+              AS ygg_ducklake 
+              (DATA_PATH 's3://repository/', override_data_path true);
+            """,
+            "use ygg_ducklake;",
+        ]
+
         create_entity_stmt, columns_comments = self._get_entity_spec(entity_type=DuckLakeDbEntityType.DUCKLAKE)
+        self._duck_lake_receipts.extend(ducklake_instructions)
         self._duck_lake_receipts.append(self._get_entity_schema_spec())
         self._duck_lake_receipts.append(create_entity_stmt)
 

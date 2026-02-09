@@ -6,7 +6,7 @@ from typing import Type, Union
 from glom import glom
 
 import ygg.utils.commons as file_utils
-from ygg.config import YggSetup
+from ygg.config import YggDatabaseConfig, YggSetup
 from ygg.core.dynamic_odcs_models_factory import (
     DynamicModelFactory,
     Model,
@@ -27,7 +27,7 @@ from ygg.utils.ygg_logs import get_logger
 logs = get_logger()
 
 
-class DataContractManagerService:
+class DataContractServiceManager:
     """
     Service for managing contracts and related data.
     """
@@ -171,12 +171,18 @@ class DataContractManagerService:
             self._schema_property,
         ]
 
+        ygg_setup = YggSetup(create_ygg_folders=False, config_data=None)
+        db_config: YggDatabaseConfig = ygg_setup.database_config
+
         for model in models_list:
-            t = DuckLakeDbTools(model=self._cast_to_duck_lake_db_entity(model.settings), recreate_existing_entity=True)
-            for l in t.duck_lake_receipt:
-                print(l)
-            for l in t.duck_db_receipt:
-                print(l)
+            t = DuckLakeDbTools(
+                model=self._cast_to_duck_lake_db_entity(model.settings),
+                recreate_existing_entity=self._recreate_existing,
+            )
+            db_url = f"{db_config.database_location}/{db_config.database}.{db_config.database_extension}"
+
+            DuckDbTools.execute_receipts(db_url=db_url, receipt=t.duck_db_receipt)
+            DuckDbTools.execute_receipts(db_url=db_url, receipt=t.duck_lake_receipt)
 
     def build_contract(self) -> None:
         """Build the contract by creating and populating the necessary models."""

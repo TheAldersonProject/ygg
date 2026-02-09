@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-from ygg.services.data_contract_manager_service import DataContractManagerService
+from ygg.services.data_contract_service_manager import DataContractServiceManager
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -21,9 +21,7 @@ def main():
         action="store_true",
         help="Recreate all database objects in the database.",
     )
-    parser.add_argument(
-        "-f", "--file", "--contract", required=True, help="Path to the contract file."
-    )
+    parser.add_argument("-f", "--file", "--contract", required=True, help="Path to the contract file.")
     # parser.add_argument("-o", "--output", help="Path to the output folder.")
 
     args = parser.parse_args()
@@ -40,9 +38,7 @@ def main():
     # logs.debug("Data folder set.", args=args, data_folder=data_folder)
     # logs.debug("Destination set.", destination_path=data_folder or "Data will be saved in the current folder.")
 
-    manager = DataContractManagerService(
-        recreate_existing=args.recreate, contract_data=contract_data_path
-    )
+    manager = DataContractServiceManager(recreate_existing=args.recreate, contract_data=contract_data_path)
     manager.build_contract()
 
 
