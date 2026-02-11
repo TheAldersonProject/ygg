@@ -6,22 +6,14 @@ from typing import Type, Union
 from glom import glom
 
 import ygg.utils.commons as file_utils
-from ygg.config import YggDatabaseConfig, YggSetup
+from ygg.config import YggSetup
 from ygg.core.dynamic_odcs_models_factory import (
     DynamicModelFactory,
-    Model,
     YggBaseModel,
 )
 from ygg.core.dynamic_ygg_models_factory import YggFactory
-from ygg.helpers.data_types import get_data_type
-from ygg.helpers.duck_lake_db_tools import (
-    DuckLakeDbEntity,
-    DuckLakeDbEntityColumn,
-    DuckLakeDbEntityColumnDataType,
-    DuckLakeDbTools,
-)
-from ygg.helpers.logical_data_models import SharedModelMixin
-from ygg.helpers.odcs_duckdb_tools import DuckDbTools
+from ygg.helpers.enums import Model
+from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -95,11 +87,10 @@ class DataContractServiceManager:
                 data = [data]
 
             def save(dt_, model_):
-                tools_ = DuckDbTools(model=model_.settings, ygg_db_url=self._ygg_db_url)
                 entity: Type[Union[YggBaseModel, SharedModelMixin]] = model_.instance
                 entity = entity.inflate(data=dt_, model_hydrate=model_hydrate)
 
-                model_hydrate__ = tools_.insert_data(
+                model_hydrate__ = DynamicModelFactory.upsert_data_contract_entity(
                     entity=entity,
                     on_conflict_ignore=self._insert_on_conflict_ignore,
                 )
@@ -124,68 +115,6 @@ class DataContractServiceManager:
                             iterate_and_save(schema_properties_, schema_property_)
 
             iterate_and_save(data, model)
-
-    @staticmethod
-    def _cast_to_duck_lake_db_entity(model) -> DuckLakeDbEntity:
-        """Cast the model to a DuckLakeDbEntity."""
-
-        list_of_columns: list[DuckLakeDbEntityColumn] = []
-        for property_ in model.properties:
-            data_type = get_data_type(property_.type, "physical")
-            column_data_type = DuckLakeDbEntityColumnDataType(
-                data_type_name=property_.type,
-                duck_db_type=data_type["type"],
-                duck_db_regex_pattern=data_type.get("pattern", None),
-                duck_lake_type=data_type["type"],
-            )
-
-            c: DuckLakeDbEntityColumn = DuckLakeDbEntityColumn(
-                name=property_.name,
-                data_type=column_data_type,
-                enum=property_.enum,
-                comment=property_.description,
-                nullable=property_.required,
-                primary_key=property_.primary_key,
-                unique_key=property_.unique,
-                check_constraint=None,
-                default_value=property_.default if property_.default and property_.default != ... else None,
-                default_value_function=property_.physical_default_function,
-            )
-            list_of_columns.append(c)
-
-        _duck_lake_db_entity: DuckLakeDbEntity = DuckLakeDbEntity(
-            name=model.entity_name, columns=list_of_columns, schema=model.entity_schema
-        )
-
-        return _duck_lake_db_entity
-
-    def _create_ygg_db_if_not_exists(self) -> None:
-        """Create the contract if it does not exist."""
-
-        models_list = [
-            self._contract,
-            self._servers,
-            self._schema,
-            self._schema_property,
-        ]
-
-        ygg_setup = YggSetup(create_ygg_folders=False, config_data=None)
-        db_config: YggDatabaseConfig = ygg_setup.database_config
-
-        for model in models_list:
-            t = DuckLakeDbTools(
-                model=self._cast_to_duck_lake_db_entity(model.settings),
-                recreate_existing_entity=self._recreate_existing,
-            )
-            db_url = f"{db_config.database_location}/{db_config.database}.{db_config.database_extension}"
-
-            DuckDbTools.execute_instructions(db_url=db_url, receipt=t.duck_db_instructions)
-            DuckDbTools.execute_instructions(db_url=db_url, receipt=t.duck_lake_instructions)
-
-    def build(self) -> None:
-        """Build the contract database assets."""
-
-        self._create_ygg_db_if_not_exists()
 
     def build_contract(self) -> None:
         """Build the contract by creating and populating the necessary models."""

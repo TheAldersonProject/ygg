@@ -4,9 +4,11 @@ This module provides a factory class for creating Ygg objects based on configura
 """
 
 from pathlib import Path
+from typing import Any
+
+import duckdb
 
 from ygg.helpers.logical_data_models import TargetContractMap
-from ygg.helpers.odcs_duckdb_tools import DuckDbTools
 from ygg.helpers.ygg_physical_model import YggPhysicalModel
 from ygg.utils.commons import save_yaml_content
 from ygg.utils.ygg_logs import get_logger
@@ -48,7 +50,7 @@ class YggFactory:
                 from    data_contracts.contract c
                 where   true
                 and     c.id = '{self._contract_id}' and c.version = '{self._contract_version}';"""
-        contract = DuckDbTools.run_sql_statement(self._db_url, contract_stmt)
+        contract = self.run_sql_statement(self._db_url, contract_stmt)
         contract_pk: dict = {
             "id": contract[0]["id"],
             "version": contract[0]["version"],
@@ -64,7 +66,7 @@ class YggFactory:
                 and     c.contract_id = '{self._contract_id}'
                 and     c.contract_record_hash = '{contract_pk["record_hash"]}';
             """
-        contract_schema = DuckDbTools.run_sql_statement(self._db_url, contract_schema_stmt)
+        contract_schema = self.run_sql_statement(self._db_url, contract_schema_stmt)
 
         for sc_ in contract_schema:
             contract_schema_pk: dict = {
@@ -81,7 +83,7 @@ class YggFactory:
                 and     c.contract_schema_id = '{contract_schema_pk["contract_schema_id"]}'
                 and     c.contract_schema_record_hash = '{contract_schema_pk["contract_schema_record_hash"]}';
             """
-            contract_schema_properties = DuckDbTools.run_sql_statement(self._db_url, contract_schema_property_stmt)
+            contract_schema_properties = self.run_sql_statement(self._db_url, contract_schema_property_stmt)
             sc_["properties"] = contract_schema_properties
 
         contract_ = contract[0]
@@ -95,6 +97,25 @@ class YggFactory:
 
         path_ = sink_path / "contracts"
         return path_
+
+    @staticmethod
+    def run_sql_statement(db_url: str, statement: str) -> list[dict]:
+        """Run a SQL statement against the database."""
+
+        content: Any = None
+        with duckdb.connect(db_url, read_only=False) as con:
+            try:
+                logs.debug("Executing SQL statement.")
+                content = con.sql(statement)
+                logs.debug("SQL statement executed successfully.", statement=statement)
+
+                content = content.to_df()
+                content = content.to_dict("records")
+            except Exception as e:
+                logs.error(f"Error executing SQL statement: {e}", error=str(e))
+                raise e
+
+        return content
 
     def _sink_ygg_contract(self, sink_path: Path) -> None:
         """Sink the Ygg Contract."""

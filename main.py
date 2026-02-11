@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 
-from ygg.services.data_contract_service_manager import DataContractServiceManager
+from ygg.services.ygg_service import YggService
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -22,21 +22,24 @@ def main():
     )
     parser.add_argument("-f", "--file", "--contract", help="Path to the contract file.")
     parser.add_argument("-c", "--create-db", action="store_true", help="Create the Ygg database.")
+    parser.add_argument("-s", "--setup", action="store_true", help="Setup Ygg DuckLake.")
+    parser.add_argument("-b", "--build", action="store_true", help="Build the data contract.")
 
     args = parser.parse_args()
     contracts_input_folder = os.getenv("CONTRACTS_INPUT_FOLDER", None)
 
-    contract_data_path = None
+    if args.setup:
+        logs.info("Setting up Ygg DuckLake")
+        YggService.setup()
+
     if contracts_input_folder and args.file:
         contracts_input_folder = contracts_input_folder + "/"
         contract_data_path = contracts_input_folder + args.file
 
-    manager = DataContractServiceManager(recreate_existing=args.recreate, contract_data=contract_data_path)
-    if args.create_db:
-        manager.build()
+        YggService.register_data_contract(contract_data=contract_data_path, insert_on_conflict_ignore=True)
 
-    if args.file:
-        manager.build_contract()
+    if args.build:
+        YggService.build_contract()
 
 
 if __name__ == "__main__":

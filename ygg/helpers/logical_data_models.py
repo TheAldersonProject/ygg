@@ -1,46 +1,15 @@
 """Ygg Models."""
 
-from enum import Enum
-from typing import Any, Literal, Self, Type
+from pathlib import Path
+from typing import Any, Literal, Type
 
 from pydantic import BaseModel, ConfigDict, Field
-
-import ygg.utils.ygg_logs as log_utils
-
-logs = log_utils.get_logger()
 
 
 class YggBaseModel(BaseModel):
     """Dynamic Models Factory Base Model."""
 
     model_config = ConfigDict(use_enum_values=True)
-
-
-class SharedModelMixin:
-    """Shared Model Mixin."""
-
-    def _model_hydrate(self, hydrate_data: dict) -> None:
-        """Hydrate the model."""
-
-        if not hydrate_data:
-            return
-
-        me = self
-        dct = {k: v for k, v in hydrate_data.items() if k in me.model_fields}  #  type: ignore
-        for k, v in dct.items():
-            setattr(self, k, v)
-
-    @classmethod
-    def inflate(cls, data: dict, model_hydrate: dict | None = None) -> Self:
-        """Inflate the model."""
-
-        logs.debug("Inflating Model.", name=cls.__name__)
-
-        model = cls(**data)
-        if model_hydrate:
-            model._model_hydrate(model_hydrate)
-
-        return model
 
 
 class YggConfig(YggBaseModel):
@@ -86,15 +55,6 @@ class ModelSettings(YggBaseModel):
     description: str
     odcs_reference: str
     properties: list[ModelProperty]
-
-
-class Model(Enum):
-    """Contract Models Enum."""
-
-    CONTRACT = "contract"
-    SCHEMA = "schema"
-    SCHEMA_PROPERTY = "schema_property"
-    SERVERS = "servers"
 
 
 class YggModelProperty(YggBaseModel):
@@ -182,15 +142,20 @@ class TargetContractMap(YggBaseModel):
     schemas: list[TargetContractSchemaMap] = Field(..., description="List of target contract schemas")
 
 
-class DuckLakeDbEntityType(Enum):
-    """Entity Types"""
+class PolyglotDatabaseConfig(YggBaseModel):
+    """Polyglot Database Config"""
 
-    DUCKDB = "duckdb"
-    DUCKLAKE = "ducklake"
+    host: str | None = Field(default=None, description="Database host")
+    db_name: str | None = Field(default=None, description="Database name")
+    port: str | int | None = Field(default=None, description="Database port")
+    user: str | None = Field(default=None, description="Database user")
+    password: str | None = Field(default=None, description="Database password")
+    path: str | Path | None = Field(default=None, description="Database path")
+    auto_commit: bool | None = Field(default=True, description="Auto commit")
 
 
-class DuckLakeDbEntityColumnDataType(YggBaseModel):
-    """DuckLake Db Entity Column Data Type"""
+class PolyglotEntityColumnDataType(YggBaseModel):
+    """Polyglot Db Entity Column Data Type"""
 
     data_type_name: str = Field(..., description="Column data type")
     duck_db_type: str = Field(..., description="DuckDb data type")
@@ -198,11 +163,11 @@ class DuckLakeDbEntityColumnDataType(YggBaseModel):
     duck_lake_type: str = Field(..., description="DuckLake data type")
 
 
-class DuckLakeDbEntityColumn(YggBaseModel):
-    """DuckLake Db Entity Column"""
+class PolyglotEntityColumn(YggBaseModel):
+    """Polyglot Db Entity Column"""
 
     name: str = Field(..., description="Column name")
-    data_type: DuckLakeDbEntityColumnDataType = Field(..., description="Column data type")
+    data_type: PolyglotEntityColumnDataType = Field(..., description="Column data type")
     enum: list | None = Field(default=None)
     comment: str | None = Field(default=None, description="Column comment")
     nullable: bool | None = Field(default=False, description="Whether the column can be null")
@@ -213,10 +178,19 @@ class DuckLakeDbEntityColumn(YggBaseModel):
     default_value_function: str | None = Field(default=None, description="Database function for default value")
 
 
-class DuckLakeDbEntity(YggBaseModel):
-    """DuckLake Db Entity"""
+class PolyglotEntity(YggBaseModel):
+    """Polyglot Db Entity"""
 
     name: str = Field(..., description="Entity name")
-    schema: str = Field(..., description="Entity schema name")
+    schema_: str = Field(..., description="Entity schema name")
     comment: str | None = Field(default=None, description="Entity comment")
-    columns: list[DuckLakeDbEntityColumn] | None = Field(default=None, description="Entity list of columns")
+    columns: list[PolyglotEntityColumn] | None = Field(default=None, description="Entity list of columns")
+
+
+class DuckLakeSetup(YggBaseModel):
+    """DuckLake Setup."""
+
+    install_modules: list[str] | str = Field(default_factory=list, description="List of modules to install.")
+    load_modules: list[str] | str = Field(default_factory=list, description="List of modules to load.")
+    object_storage_secret: str = Field(default=str, description="Object storage secret.")
+    attach_ducklake_catalog: str = Field(default=str, description="DuckLake catalog to attach.")

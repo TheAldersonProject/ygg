@@ -73,6 +73,7 @@ class YggS3Config(YggBaseConfig):
     aws_access_key_id: str = Field(..., description="AWS access key id")
     aws_secret_access_key: str = Field(..., description="AWS secret access key")
     region_name: str = Field(..., description="AWS region name")
+    use_ssl: bool | None = Field(default=True, description="Indicates whether to use SSL.")
 
 
 class YggSinkConfig(YggBaseConfig):
@@ -83,6 +84,17 @@ class YggGeneralConfiguration(YggBaseConfig):
     environment: str = Field(..., description="Environment name.", examples=["dev", "prod"])
     repository: str = Field(..., description="Repository name.")
     lake_alias: str = Field(..., description="DuckLake alias.")
+    local_cache: str = Field(..., description="Local cache path.")
+
+
+class YggQuackDatabaseConfig(YggBaseConfig):
+    """Quack Database Config."""
+
+    host: str | None = Field(default=None, description="Database host")
+    db_name: str | None = Field(default=None, description="Database name")
+    port: int | str | None = Field(default=None, description="Database port")
+    user: str | None = Field(default=None, description="Database user")
+    password: str | None = Field(default=None, description="Database password")
 
 
 class YggDatabaseConfig(YggBaseConfig):
@@ -156,6 +168,12 @@ class YggSetup:
         """Get the Ygg Repository Config."""
 
         return YggRepositoryConfiguration(**self._config.get("ygg-repository-config", {}))
+
+    @property
+    def ygg_quack_config(self) -> YggQuackDatabaseConfig:
+        """Get the Ygg Quack Config."""
+
+        return YggQuackDatabaseConfig(**self._config.get("ygg-quack-database-config", {}))
 
     @property
     def ygg_config(self) -> YggRepositoryConfiguration:
