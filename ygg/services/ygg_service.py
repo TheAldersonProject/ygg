@@ -12,6 +12,7 @@ from ygg.helpers.enums import DuckLakeDbEntityType, Model
 from ygg.helpers.logical_data_models import YggBaseModel
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.polyglot.ducklake_connector import DuckLakeConnector
+from ygg.polyglot.helper import Helper
 from ygg.polyglot.quack_tools import QuackConnector
 from ygg.utils.ygg_logs import get_logger
 
@@ -34,7 +35,7 @@ class YggService:
         for model in models_list:
             logs.info("Setting up model", model=model.settings.name)  # type: ignore
             t = QuackConnector(
-                model=DynamicModelFactory.cast_to_duck_lake_db_entity(model.settings),
+                model=Helper.cast_to_polyglot_entity(model.settings),
                 recreate_existing_entity=recreate_existing,
                 catalog_name=config.lake_alias,
                 connector_type=DuckLakeDbEntityType.DUCKLAKE,
@@ -55,6 +56,8 @@ class YggService:
         if not contract_data:
             logs.error("Contract data cannot be empty.")
             raise ValueError("Contract data cannot be empty.")
+
+        config: YggGeneralConfiguration = YggSetup().ygg_config
 
         if not isinstance(contract_data, dict):
             contract_data = file_utils.get_yaml_content(contract_data)
@@ -85,9 +88,9 @@ class YggService:
                 entity = entity.inflate(data=dt_, model_hydrate=model_hydrate)
 
                 dl = QuackConnector(
-                    model=DynamicModelFactory.cast_to_duck_lake_db_entity(model_.settings),
+                    model=Helper.cast_to_polyglot_entity(model_.settings),
                     recreate_existing_entity=False,
-                    catalog_name="ygg_ducklake",
+                    catalog_name=config.lake_alias,
                     connector_type=DuckLakeDbEntityType.DUCKLAKE,
                 )
                 dl: DuckLakeConnector = dl.connector
@@ -96,9 +99,9 @@ class YggService:
                 lake_instructions.append(dl.entity_ddl)
 
                 db = QuackConnector(
-                    model=DynamicModelFactory.cast_to_duck_lake_db_entity(model_.settings),
+                    model=Helper.cast_to_polyglot_entity(model_.settings),
                     recreate_existing_entity=False,
-                    catalog_name="ygg_ducklake",
+                    catalog_name=config.lake_alias,
                     connector_type=DuckLakeDbEntityType.DUCKDB,
                 )
 
@@ -111,7 +114,7 @@ class YggService:
                     on_conflict_ignore=insert_on_conflict_ignore,
                     ducklake_instructions=lake_instructions,
                     duckdb_instructions=db_instructions,
-                    catalog_name="ygg_ducklake",
+                    catalog_name=config.lake_alias,
                 )
 
                 if model_ is _contract:
@@ -143,6 +146,6 @@ class YggService:
         factory = YggFactory(
             contract_id=contract_id,
             contract_version=contract_version,
-            db_url="",
         )
-        factory.build_contract()
+        factory.register_contract_physical_model()
+        # factory.build_contract()

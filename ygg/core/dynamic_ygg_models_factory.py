@@ -4,13 +4,25 @@ This module provides a factory class for creating Ygg objects based on configura
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Type
 
 import duckdb
+from numpy import ndarray
 
-from ygg.helpers.logical_data_models import TargetContractMap
-from ygg.helpers.ygg_physical_model import YggPhysicalModel
-from ygg.utils.commons import save_yaml_content
+from ygg.config import YggGeneralConfiguration, YggSetup
+from ygg.core.dynamic_odcs_models_factory import DynamicModelFactory
+from ygg.helpers.data_types import get_data_type
+from ygg.helpers.enums import DuckLakeDbEntityType, Model
+from ygg.helpers.logical_data_models import (
+    ModelSettings,
+    PolyglotEntity,
+    PolyglotEntityColumn,
+    PolyglotEntityColumnDataType,
+    YggBaseModel,
+)
+from ygg.polyglot.ducklake_connector import DuckLakeConnector
+from ygg.polyglot.helper import Helper
+from ygg.polyglot.quack_tools import QuackConnector
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -19,77 +31,124 @@ logs = get_logger()
 class YggFactory:
     """Factory for creating Ygg objects."""
 
-    def __init__(self, contract_id: str, contract_version: str, db_url: str | None = None):
+    def __init__(self, contract_id: str, contract_version: str):
         """Initialize the Ygg Factory."""
 
         logs.debug(f"Initializing Ygg Factory for contract: {contract_id} version: {contract_version}")
 
         if not contract_id or not contract_version:
+            logs.error("Contract ID and version cannot be empty.")
             raise ValueError("Contract ID and version cannot be empty.")
 
         self._contract_id = contract_id
         self._contract_version = contract_version
-        self._target_contract_map: TargetContractMap | None = None
-        self._db_url = db_url if db_url else ":memory:"
+        self._db_url = ":memory:"
+
+        self._contract: Type[YggBaseModel] | None = None
+        self._servers: dict[str, Type[YggBaseModel]] = {}
+        self._schemas: dict[str, list[Type[YggBaseModel]]] = {}
+        self._schema_properties: dict[str, list[Type[YggBaseModel]]] = {}
+
+        self._config: YggGeneralConfiguration = YggSetup().ygg_config
 
         logs.debug("Ygg Factory Initialized.")
+        self._load_contract()
+        self._load_contract_servers()
+        self._load_contract_schemas()
 
-    @property
-    def contract_map(self):
-        return self._target_contract_map
+    def _load(self, settings: ModelSettings, query: str) -> list[dict]:
+        """Loads data from DuckLake."""
 
-    def _db_load_target_contract(self) -> None:
-        """Load the target contract."""
+        result = self.run_lake_statement(statement=query, settings=settings)
+        return result
 
-        contract_stmt: str = f"""
-                select  id as "id",
-                        version as "version",
-                        record_hash as "record_hash" ,
-                        tenant as "catalog",
-                        domain as "catalog_schema"
-                from    data_contracts.contract c
-                where   true
-                and     c.id = '{self._contract_id}' and c.version = '{self._contract_version}';"""
-        contract = self.run_sql_statement(self._db_url, contract_stmt)
-        contract_pk: dict = {
-            "id": contract[0]["id"],
-            "version": contract[0]["version"],
-            "record_hash": contract[0]["record_hash"],
-        }
+    def _load_contract(self) -> None:
+        """Load the contract."""
 
-        contract_schema_stmt: str = f"""
-                select  id as "id", record_hash as "record_hash",
-                        physical_name as "entity", physical_type as "physical_type",
-                        contract_id as "contract_id", contract_record_hash as "contract_record_hash"
-                from    data_contracts.contract_schema c 
-                where   true 
-                and     c.contract_id = '{self._contract_id}'
-                and     c.contract_record_hash = '{contract_pk["record_hash"]}';
-            """
-        contract_schema = self.run_sql_statement(self._db_url, contract_schema_stmt)
+        _contract = DynamicModelFactory(model=Model.CONTRACT)
+        settings = _contract.settings
+        statement = f"""
+            select  * 
+            from    {self._config.lake_alias}.{settings.entity_schema}.{settings.entity_name} 
+            where   id = '{self._contract_id}' 
+            and     version = '{self._contract_version}';
+        """
 
-        for sc_ in contract_schema:
-            contract_schema_pk: dict = {
-                "contract_schema_id": sc_["id"],
-                "contract_schema_record_hash": sc_["record_hash"],
-            }
-            contract_schema_property_stmt: str = f"""
-                select  physical_name as "name", description as "description", primary_key as "is_key",
-                        is_unique as "is_unique", is_required as "is_required", physical_type as "physical_type",
-                        ID as "id", record_hash as "record_hash", contract_schema_id as "contract_schema_id",
-                        contract_schema_record_hash as "contract_schema_record_hash",
-                from    data_contracts.contract_schema_property c
-                where   true 
-                and     c.contract_schema_id = '{contract_schema_pk["contract_schema_id"]}'
-                and     c.contract_schema_record_hash = '{contract_schema_pk["contract_schema_record_hash"]}';
-            """
-            contract_schema_properties = self.run_sql_statement(self._db_url, contract_schema_property_stmt)
-            sc_["properties"] = contract_schema_properties
+        result = self._load(query=statement, settings=settings)
+        self._contract = _contract.read_instance(**result[0])
 
-        contract_ = contract[0]
-        contract_["schemas"] = contract_schema
-        contract_map = TargetContractMap(**contract_)
-        self._target_contract_map = contract_map
+        logs.debug("Contract Loaded.", contract=self._contract)
+
+    def _load_contract_servers(self) -> None:
+        """Load the contract servers."""
+
+        _contract_servers = DynamicModelFactory(model=Model.SERVERS)
+        settings = _contract_servers.settings
+
+        statement = f"""
+            select  * 
+            from    {self._config.lake_alias}.{settings.entity_schema}.{settings.entity_name}
+            where   contract_id = '{self._contract.id}' 
+            and     contract_record_hash = '{self._contract.record_hash}';
+        """
+
+        result = self._load(query=statement, settings=settings)
+        servers: dict = {}
+        if result:
+            for r in result:
+                server = _contract_servers.read_instance(**r)
+                servers[server.id] = server
+
+        self._servers = servers or {}
+        logs.debug("Servers Loaded.", contract=self._servers)
+
+    def _load_contract_schema_properties(self, schema_id: str, schema_record_hash: str) -> None:
+        """Load the contract schema properties."""
+
+        _schema_properties = DynamicModelFactory(model=Model.SCHEMA_PROPERTY)
+        settings = _schema_properties.settings
+        statement = f"""
+            select  * 
+            from    {self._config.lake_alias}.{settings.entity_schema}.{settings.entity_name}
+            where   contract_schema_id = '{schema_id}' 
+            and     contract_schema_record_hash = '{schema_record_hash}';
+        """
+
+        result = self._load(query=statement, settings=settings)
+        properties: list = []
+        if result:
+            for r in result:
+                _schema_property = _schema_properties.read_instance(**r)
+                properties.append(_schema_property.model_dump())
+
+        logs.debug("Schema Properties Loaded.", schema_id=schema_id)
+        self._schema_properties[schema_id] = properties
+
+    def _load_contract_schemas(self) -> None:
+        """Load the contract schema."""
+
+        _schema = DynamicModelFactory(model=Model.SCHEMA)
+        settings = _schema.settings
+        statement = f"""
+            select  * 
+            from    {self._config.lake_alias}.{settings.entity_schema}.{settings.entity_name}
+            where   contract_id = '{self._contract.id}' 
+            and     contract_record_hash = '{self._contract.record_hash}';
+        """
+
+        result = self._load(query=statement, settings=settings)
+        schemas: dict = {}
+        if result:
+            for r in result:
+                properties = self._load_contract_schema_properties(
+                    schema_id=r["id"], schema_record_hash=r["record_hash"]
+                )
+                r["properties"] = properties
+                schema = _schema.read_instance(**r)
+                schemas[schema.id] = schema
+
+        self._schemas = schemas or {}
+        logs.debug("Schemas Loaded.", schemas=self._schemas)
 
     @staticmethod
     def _get_sink_folder_path(sink_path: str | Path) -> Path:
@@ -98,18 +157,44 @@ class YggFactory:
         path_ = sink_path / "contracts"
         return path_
 
-    @staticmethod
-    def run_sql_statement(db_url: str, statement: str) -> list[dict]:
+    def run_lake_statement(self, statement: str, settings: ModelSettings) -> list[dict]:
         """Run a SQL statement against the database."""
 
         content: Any = None
-        with duckdb.connect(db_url, read_only=False) as con:
+        dl = QuackConnector(
+            model=Helper.cast_to_polyglot_entity(settings),
+            recreate_existing_entity=False,
+            catalog_name=self._config.lake_alias,
+            connector_type=DuckLakeDbEntityType.DUCKLAKE,
+        )
+        dl: DuckLakeConnector = dl.connector
+        lake_instructions: list[str] = list(dl.ducklake_setup_instructions().model_dump().values())
+        lake_instructions.append(dl.schema_ddl)
+        lake_instructions.append(dl.entity_ddl)
+
+        def lower_json_keys(obj):
+            if isinstance(obj, dict):
+                return {k.lower(): lower_json_keys(v) for k, v in obj.items()}
+            elif isinstance(obj, list) or isinstance(obj, ndarray):
+                return [lower_json_keys(i) for i in obj]
+            else:
+                return obj
+
+        with duckdb.connect(":memory:", read_only=False) as con:
             try:
-                logs.debug("Executing SQL statement.")
+                for instruction in lake_instructions:
+                    logs.debug("Executing instruction.", instruction=instruction)
+                    con.execute(instruction)
+
+                logs.debug("Executing SQL statement.", statement=statement)
                 content = con.sql(statement)
-                logs.debug("SQL statement executed successfully.", statement=statement)
 
                 content = content.to_df()
+                content = content.rename(columns=str.lower)
+
+                object_cols = content.select_dtypes(include=["object"]).columns
+                for o in object_cols:
+                    content[o] = content[o].apply(lower_json_keys)
                 content = content.to_dict("records")
             except Exception as e:
                 logs.error(f"Error executing SQL statement: {e}", error=str(e))
@@ -117,32 +202,51 @@ class YggFactory:
 
         return content
 
-    def _sink_ygg_contract(self, sink_path: Path) -> None:
-        """Sink the Ygg Contract."""
+    def register_contract_physical_model(self) -> None:
+        """Register the contract physical model."""
 
-        contract_map = self.contract_map
+        catalog_name: str = self._contract.tenant  # type: ignore
+        schema_name: str = self._contract.domain  # type: ignore
+        if self._schemas and isinstance(self._schemas, dict):
+            for k, sc in self._schemas.items():
+                columns: list[PolyglotEntityColumn] = []
+                for c in self._schema_properties.get(sc.id, []):
+                    dt: dict = get_data_type(c["logical_type"], "physical")
+                    pcd = PolyglotEntityColumnDataType(
+                        data_type_name=c["logical_type"],
+                        duck_db_type=c["physical_type"] or dt.get("type", None) if dt else c["logical_type"],
+                        duck_db_regex_pattern=dt.get("pattern", None) if dt else None,
+                        duck_lake_type=c["physical_type"] or dt.get("type", c["logical_type"]),
+                    )
+                    pc = PolyglotEntityColumn(
+                        name=c["physical_name"],
+                        data_type=pcd,
+                        enum=None,
+                        comment=c["description"],
+                        nullable=c["is_required"] or False,
+                        primary_key=c["primary_key"] or False,
+                        unique_key=c["is_unique"] or False,
+                        check_constraint="",
+                        default_value=None,
+                        default_value_function=None,
+                    )
+                    columns.append(pc)
 
-        for sc in contract_map.schemas:
-            sink_contract_file_name = f"{sc.entity}.yaml"
-            path_ = self._get_sink_folder_path(sink_path) / sink_contract_file_name
-            json_content = sc.model_dump()
-            save_yaml_content(path_, json_content)
-
-    def _sink_database(self, sink_path: Path) -> None:
-        """Sink the database."""
-
-        ddb = YggPhysicalModel(
-            self._target_contract_map,
-            replace_existing=True,
-            db_in_path=self._db_url,
-            db_out_path=self._get_sink_folder_path(sink_path),
-        )
-        ddb.build_output()
-
-    def build_contract(self, sink_path: Path, sink_result: bool = True) -> None:
-        """Build the Ygg Contract."""
-
-        self._db_load_target_contract()
-        if sink_result:
-            # self._sink_ygg_contract(sink_path)
-            self._sink_database(sink_path)
+                entity: PolyglotEntity = PolyglotEntity(
+                    name=sc.physical_name,
+                    schema_=schema_name,
+                    comment=sc.description,
+                    columns=columns,
+                )
+                dl = QuackConnector(
+                    model=entity,
+                    recreate_existing_entity=True,
+                    catalog_name=catalog_name,
+                    connector_type=DuckLakeDbEntityType.DUCKLAKE,
+                )
+                dl: DuckLakeConnector = dl.connector
+                dl.create_duck_lake_catalog()
+                lake_instructions: list[str] = list(dl.ducklake_setup_instructions().model_dump().values())
+                lake_instructions.append(dl.schema_ddl)
+                lake_instructions.append(dl.entity_ddl)
+                QuackConnector.execute_instructions(instructions=lake_instructions)

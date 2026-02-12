@@ -68,7 +68,7 @@ class QuackService:
 
         create_table_header: str = create_if_not_exists if not self._recreate_existing_entity else create_or_replace
         entity_header = (
-            f"{create_table_header} {ducklake_catalog}{self._entity_schema_name.upper()}.{self._model.name.lower()}"
+            f"{create_table_header} {ducklake_catalog}{self._entity_schema_name.lower()}.{self._model.name.lower()}"
         )
 
         logs.debug("Entity Creation Header", header=entity_header)

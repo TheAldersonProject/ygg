@@ -16,7 +16,7 @@ def main():
 
     parser.add_argument(
         "-r",
-        "--recreate",
+        "--register-contract",
         action="store_true",
         help="Recreate all database objects in the database.",
     )
@@ -36,10 +36,11 @@ def main():
         contracts_input_folder = contracts_input_folder + "/"
         contract_data_path = contracts_input_folder + args.file
 
-        YggService.register_data_contract(contract_data=contract_data_path, insert_on_conflict_ignore=True)
+        if args.register_contract:
+            YggService.register_data_contract(contract_data=contract_data_path, insert_on_conflict_ignore=True)
 
     if args.build:
-        YggService.build_contract()
+        YggService.build_contract(contract_id="dc-snowflake-utilization-metadata", contract_version="0.0.1")
 
 
 if __name__ == "__main__":
