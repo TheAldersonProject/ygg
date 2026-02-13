@@ -25,7 +25,7 @@ from ygg.polyglot.helper import Helper
 from ygg.polyglot.quack_tools import QuackConnector
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="YggFactory")
 
 
 class YggFactory:

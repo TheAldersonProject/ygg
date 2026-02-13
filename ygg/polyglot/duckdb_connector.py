@@ -7,7 +7,7 @@ from ygg.helpers.logical_data_models import (
 from ygg.polyglot.quack_service import QuackService
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="DuckDbConnector")
 
 
 class DuckDbConnector(QuackService):

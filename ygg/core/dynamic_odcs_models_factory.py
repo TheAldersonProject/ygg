@@ -21,7 +21,7 @@ from ygg.helpers.logical_data_models import (
 )
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 
-logs = log_utils.get_logger()
+logs = log_utils.get_logger(logger_name="DynamicModelFactory")
 
 
 class DynamicModelFactory:

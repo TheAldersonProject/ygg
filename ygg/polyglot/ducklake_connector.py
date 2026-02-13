@@ -12,7 +12,7 @@ from ygg.polyglot.postgres_db_tools import PostgresConnector
 from ygg.polyglot.quack_service import QuackService
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="DuckLakeConnector")
 
 
 class DuckLakeConnector(QuackService):

@@ -1,12 +1,15 @@
 """Basic logging class for logging in JSON format."""
 
 import logging
+import uuid
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, TypeVar
 from uuid import uuid4
 
 import structlog
+
+from ygg.utils.custom_decorators import singleton
 
 R = TypeVar("R")
 
@@ -29,9 +32,29 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
-def get_logger(log_level: LogLevel = LogLevel.DEBUG) -> "Logger":
+def get_logger(logger_name: str | None = "", log_level: LogLevel = LogLevel.DEBUG) -> "Logger":
     """Get logger with default parameters."""
-    return Logger(log_level=log_level)
+    return Logger(name=logger_name, log_level=log_level)
+
+
+@singleton
+class PID:
+    """Class to manage process IDs for logging purposes."""
+
+    def __init__(self, pid: Any | None = None) -> None:
+        if not pid:
+            pid = str(uuid.uuid4())
+
+        self._pid = pid
+
+    @property
+    def pid(self) -> str:
+        """Get the process ID."""
+        return str(self._pid)
+
+    @staticmethod
+    def Pid() -> str:
+        return PID().pid
 
 
 class Logger:
@@ -40,6 +63,7 @@ class Logger:
     def __init__(
         self,
         log_level: LogLevel = LogLevel.DEBUG,
+        name: str | None = None,
         logger_uuid: str | None = None,
     ) -> None:
         """
@@ -71,8 +95,10 @@ class Logger:
             cache_logger_on_first_use=False,
         )
 
+        self._pid = PID.Pid()
         self._uuid = logger_uuid or str(uuid4())
         self._log = structlog.get_logger()
+        self._name = name
 
     @staticmethod
     def log(func: Callable[..., R]) -> Callable[..., R]:
@@ -109,8 +135,11 @@ class Logger:
             :rtype: Any
             """
             kwargs = kwargs or {}
+            kwargs["logger"] = self._name or "NA"
             kwargs["uuid"] = self._uuid
-            # kwargs["uid"] = str(uuid4())
+            kwargs["pid"] = self._pid
+            kwargs["id"] = str(uuid4())
+
             log_method = getattr(self._log, func.__name__)
 
             return log_method(message, **kwargs)

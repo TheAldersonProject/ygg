@@ -6,7 +6,7 @@ from botocore.config import Config
 from ygg.config import YggS3Config, YggSetup
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="S3Connector")
 
 
 class S3Connector:

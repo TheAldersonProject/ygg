@@ -8,7 +8,7 @@ from ygg.polyglot.duckdb_connector import DuckDbConnector
 from ygg.polyglot.ducklake_connector import DuckLakeConnector
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="QuackConnector")
 
 
 class QuackConnector:

@@ -4,7 +4,7 @@ from typing import Self
 
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="SharedModelMixin")
 
 
 class SharedModelMixin:

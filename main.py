@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from ygg.services.ygg_service import YggService
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="YggCli")
 
 load_dotenv()
 

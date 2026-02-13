@@ -2,17 +2,19 @@ name: ygg
 services:
     rustfs:
         container_name: rustfs
+        # This forces the container to use your current user's ID
+        user: "${UID:-1000}:${GID:-1000}"
         ports:
-            - 9000:9000
-            - 9001:9001
+          - 9000:9000
+          - 9001:9001
         volumes:
-            - /Users/thiagodias/Tad/projects/tyr/rustfs:/data
+          # Removed :Z (SELinux) as it is usually not needed on standard Ubuntu
+          - /home/thiago/projects/.ygg/rustfs:/data
         environment:
           - RUSTFS_ACCESS_KEY=rustfsadmin
           - RUSTFS_SECRET_KEY=rustfsadmin
           - RUSTFS_CONSOLE_ENABLE=true
         command: >
-          --address :9000
           --console-enable
           --access-key rustfsadmin
           --secret-key rustfsadmin

@@ -16,7 +16,7 @@ from ygg.polyglot.helper import Helper
 from ygg.polyglot.quack_tools import QuackConnector
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="YggService")
 
 
 class YggService:
@@ -48,6 +48,8 @@ class YggService:
             instructions.append(t.entity_ddl)
             QuackConnector.execute_instructions(instructions=instructions)
             logs.info("Ygg Service setup complete for model.", model=model.settings.name)  # type: ignore
+            for i in instructions:
+                print(i)
 
     @staticmethod
     def register_data_contract(contract_data: dict | str, insert_on_conflict_ignore: bool = True) -> None:

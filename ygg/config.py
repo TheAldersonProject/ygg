@@ -139,7 +139,6 @@ class YggSetup:
         """Initialize the Ygg Setup."""
 
         self._config = self._get_config(config_data)
-        print(self._config)
         self._create_ygg_folders = create_ygg_folders
 
         self._sink_config: YggSinkConfig = self._ygg_sink_config()

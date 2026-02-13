@@ -6,7 +6,7 @@ from psycopg import sql
 from ygg.helpers.logical_data_models import PolyglotDatabaseConfig
 from ygg.utils.ygg_logs import get_logger
 
-logs = get_logger()
+logs = get_logger(logger_name="PostgresConnector")
 
 
 class PostgresConnector:
