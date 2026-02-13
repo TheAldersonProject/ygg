@@ -250,3 +250,6 @@ class YggFactory:
                 lake_instructions.append(dl.schema_ddl)
                 lake_instructions.append(dl.entity_ddl)
                 QuackConnector.execute_instructions(instructions=lake_instructions)
+
+                for i in lake_instructions:
+                    print(i)

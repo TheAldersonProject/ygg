@@ -141,10 +141,17 @@ class YggService:
             iterate_and_save(data, model)
 
     @staticmethod
-    def build_contract(contract_id: str | None = None, contract_version: str | None = None) -> None:
+    def build_contract(
+        contract_id: str | None = None, contract_version: str | None = None, contract_data: dict | str | None = None
+    ) -> None:
         """Build the contract by creating and populating the necessary models."""
 
         logs.info("Hello from the build contract method")
+        if contract_data and isinstance(contract_data, str):
+            contract_data = file_utils.get_yaml_content(contract_data)
+        if not contract_id and isinstance(contract_data, dict):
+            contract_id = glom(contract_data, "contract.id")
+            contract_version = glom(contract_data, "contract.version")
         factory = YggFactory(
             contract_id=contract_id,
             contract_version=contract_version,

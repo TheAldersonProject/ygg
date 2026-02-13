@@ -88,7 +88,7 @@ class QuackService:
         if entity_type == DuckLakeDbEntityType.DUCKLAKE:
             column_ddl_definition = duck_lake_column_spec.format(
                 name=column_name.lower(),
-                type=column.data_type.duck_lake_type.upper(),
+                type=column.data_type.duck_lake_type,
             )
 
         elif entity_type == DuckLakeDbEntityType.DUCKDB:
@@ -99,7 +99,7 @@ class QuackService:
                 data_type: str = f""" ENUM({", ".join(["'" + enum_ + "'" for enum_ in column.enum])}) """
                 check_constraint: str | None = None
             else:
-                data_type: str = column.data_type.duck_lake_type.upper()
+                data_type: str = column.data_type.duck_lake_type
                 check_constraint: str | None = None
 
                 if column.data_type.duck_db_regex_pattern:

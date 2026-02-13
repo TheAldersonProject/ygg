@@ -40,7 +40,7 @@ def main():
             YggService.register_data_contract(contract_data=contract_data_path, insert_on_conflict_ignore=True)
 
     if args.build:
-        YggService.build_contract(contract_id="dc-snowflake-utilization-metadata", contract_version="0.0.1")
+        YggService.build_contract(contract_data=contract_data_path)
 
 
 if __name__ == "__main__":
