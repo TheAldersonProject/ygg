@@ -77,7 +77,7 @@ class YggFactory:
         result = self._load(query=statement, settings=settings)
         self._contract = _contract.read_instance(**result[0])
 
-        logs.debug("Contract Loaded.", contract=self._contract)
+        logs.debug("Contract Loaded.")
 
     def _load_contract_servers(self) -> None:
         """Load the contract servers."""
@@ -100,7 +100,7 @@ class YggFactory:
                 servers[server.id] = server
 
         self._servers = servers or {}
-        logs.debug("Servers Loaded.", contract=self._servers)
+        logs.debug("Servers Loaded.")
 
     def _load_contract_schema_properties(self, schema_id: str, schema_record_hash: str) -> None:
         """Load the contract schema properties."""
@@ -148,7 +148,7 @@ class YggFactory:
                 schemas[schema.id] = schema
 
         self._schemas = schemas or {}
-        logs.debug("Schemas Loaded.", schemas=self._schemas)
+        logs.debug("Schemas Loaded.")
 
     @staticmethod
     def _get_sink_folder_path(sink_path: str | Path) -> Path:
@@ -182,11 +182,10 @@ class YggFactory:
 
         with duckdb.connect(":memory:", read_only=False) as con:
             try:
+                logs.debug("Executing instructions.")
                 for instruction in lake_instructions:
-                    logs.debug("Executing instruction.", instruction=instruction)
                     con.execute(instruction)
 
-                logs.debug("Executing SQL statement.", statement=statement)
                 content = con.sql(statement)
 
                 content = content.to_df()

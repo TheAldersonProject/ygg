@@ -106,26 +106,48 @@ class YggModel(YggBaseModel):
 class TargetContractSchemaPropertyMap(YggBaseModel):
     """Map for the factory for creating target contract schema properties."""
 
-    id: str = Field(..., description="Unique identifier for the target contract schema property")
-    record_hash: str = Field(..., description="Hash of the target contract schema property record")
+    id: str = Field(
+        ..., description="Unique identifier for the target contract schema property"
+    )
+    record_hash: str = Field(
+        ..., description="Hash of the target contract schema property record"
+    )
     name: str = Field(..., description="Name of the target contract schema property")
-    description: str = Field(..., description="Description of the target contract schema property")
-    physical_type: str = Field(..., description="Physical type of the target contract schema property")
-    is_key: bool = Field(..., description="Whether the target contract schema property is a key")
-    is_unique: bool = Field(..., description="Whether the target contract schema property is unique")
-    is_required: bool = Field(..., description="Whether the target contract schema property is required")
+    description: str = Field(
+        ..., description="Description of the target contract schema property"
+    )
+    physical_type: str = Field(
+        ..., description="Physical type of the target contract schema property"
+    )
+    is_key: bool = Field(
+        ..., description="Whether the target contract schema property is a key"
+    )
+    is_unique: bool = Field(
+        ..., description="Whether the target contract schema property is unique"
+    )
+    is_required: bool = Field(
+        ..., description="Whether the target contract schema property is required"
+    )
 
 
 class TargetContractSchemaMap(YggBaseModel):
     """Map for the factory for creating target contract schemas."""
 
     id: str = Field(..., description="Unique identifier for the target contract schema")
-    record_hash: str = Field(..., description="Hash of the target contract schema record")
+    record_hash: str = Field(
+        ..., description="Hash of the target contract schema record"
+    )
     entity: str = Field(..., description="Entity name of the target contract schema")
-    physical_type: str = Field(..., description="Physical type of the target contract schema")
+    physical_type: str = Field(
+        ..., description="Physical type of the target contract schema"
+    )
     contract_id: str = Field(..., description="ID of the target contract")
-    contract_record_hash: str = Field(..., description="Hash of the target contract record")
-    create_infrastructure_ddl: str | None = Field(default=None, description="DDL to create the target contract schema")
+    contract_record_hash: str = Field(
+        ..., description="Hash of the target contract record"
+    )
+    create_infrastructure_ddl: str | None = Field(
+        default=None, description="DDL to create the target contract schema"
+    )
     properties: list[TargetContractSchemaPropertyMap] = Field(
         ..., description="List of target contract schema properties"
     )
@@ -139,7 +161,9 @@ class TargetContractMap(YggBaseModel):
     version: str = Field(..., description="Version of the target contract")
     catalog: str = Field(..., description="URL to the target contract catalog")
     catalog_schema: str = Field(..., description="Schema of the target contract")
-    schemas: list[TargetContractSchemaMap] = Field(..., description="List of target contract schemas")
+    schemas: list[TargetContractSchemaMap] = Field(
+        ..., description="List of target contract schemas"
+    )
 
 
 class PolyglotDatabaseConfig(YggBaseModel):
@@ -159,7 +183,9 @@ class PolyglotEntityColumnDataType(YggBaseModel):
 
     data_type_name: str = Field(..., description="Column data type")
     duck_db_type: str = Field(..., description="DuckDb data type")
-    duck_db_regex_pattern: str | None = Field(default=None, description="DuckDb regex pattern")
+    duck_db_regex_pattern: str | None = Field(
+        default=None, description="DuckDb regex pattern"
+    )
     duck_lake_type: str = Field(..., description="DuckLake data type")
 
 
@@ -170,12 +196,20 @@ class PolyglotEntityColumn(YggBaseModel):
     data_type: PolyglotEntityColumnDataType = Field(..., description="Column data type")
     enum: list | None = Field(default=None)
     comment: str | None = Field(default=None, description="Column comment")
-    nullable: bool | None = Field(default=False, description="Whether the column can be null")
-    primary_key: bool | None = Field(default=False, description="Whether the column is a primary key")
-    unique_key: bool | None = Field(default=False, description="Whether the column is a unique key")
+    nullable: bool | None = Field(
+        default=False, description="Whether the column can be null"
+    )
+    primary_key: bool | None = Field(
+        default=False, description="Whether the column is a primary key"
+    )
+    unique_key: bool | None = Field(
+        default=False, description="Whether the column is a unique key"
+    )
     check_constraint: str | None = Field(default=None, description="Check constraint")
     default_value: str | Any | None = Field(default=None, description="Default value")
-    default_value_function: str | None = Field(default=None, description="Database function for default value")
+    default_value_function: str | None = Field(
+        default=None, description="Database function for default value"
+    )
 
 
 class PolyglotEntity(YggBaseModel):
@@ -184,13 +218,23 @@ class PolyglotEntity(YggBaseModel):
     name: str = Field(..., description="Entity name")
     schema_: str = Field(..., description="Entity schema name")
     comment: str | None = Field(default=None, description="Entity comment")
-    columns: list[PolyglotEntityColumn] | None = Field(default=None, description="Entity list of columns")
+    columns: list[PolyglotEntityColumn] | None = Field(
+        default=None, description="Entity list of columns"
+    )
 
 
 class DuckLakeSetup(YggBaseModel):
     """DuckLake Setup."""
 
-    install_modules: list[str] | str = Field(default_factory=list, description="List of modules to install.")
-    load_modules: list[str] | str = Field(default_factory=list, description="List of modules to load.")
-    object_storage_secret: str = Field(default=str, description="Object storage secret.")
-    attach_ducklake_catalog: str = Field(default=str, description="DuckLake catalog to attach.")
+    install_modules: list[str] | str = Field(
+        default_factory=list, description="List of modules to install."
+    )
+    load_modules: list[str] | str = Field(
+        default_factory=list, description="List of modules to load."
+    )
+    object_storage_secret: str = Field(
+        default=str, description="Object storage secret."
+    )
+    attach_ducklake_catalog: str = Field(
+        default=str, description="DuckLake catalog to attach."
+    )

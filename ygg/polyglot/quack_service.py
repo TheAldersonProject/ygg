@@ -44,7 +44,7 @@ class QuackService:
 
         entity_schema_spec = f"CREATE SCHEMA IF NOT EXISTS {ducklake_catalog}{self._entity_schema_name};"
 
-        logs.debug("Entity Schema Spec", spec=entity_schema_spec)
+        logs.debug("Entity schema spec createad")
         return entity_schema_spec
 
     def _get_entity_spec(self, entity_type: DuckLakeDbEntityType) -> str:
@@ -71,7 +71,6 @@ class QuackService:
             f"{create_table_header} {ducklake_catalog}{self._entity_schema_name.lower()}.{self._model.name.lower()}"
         )
 
-        logs.debug("Entity Creation Header", header=entity_header)
         return entity_header
 
     @staticmethod
@@ -140,8 +139,6 @@ class QuackService:
                 nullable=nullable or "",
                 check_constraint=check_constraint or "",
             )
-
-            logs.debug("Column DDL Definition", ddl=column_ddl_definition)
 
         return column_ddl_definition
 

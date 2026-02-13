@@ -66,7 +66,7 @@ class YggService:
             if not isinstance(contract_data, dict):
                 raise ValueError("Contract data is not a dictionary.")
 
-        logs.debug("Contract Data Loaded.", data=contract_data)
+        logs.debug("Contract Data Loaded.")
 
         _contract: DynamicModelFactory = DynamicModelFactory(model=Model.CONTRACT)
         _servers: DynamicModelFactory = DynamicModelFactory(model=Model.SERVERS)

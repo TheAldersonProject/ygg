@@ -106,7 +106,7 @@ class DynamicModelFactory:
         if not schema_config:
             raise ValueError("Models Schema not found.")
 
-        logs.debug("Models Schema Loaded.", models=schema_config)
+        logs.debug("Models Schema Loaded.")
         configs = YggConfig(**schema_config)
 
         self._schema_config = configs
@@ -124,13 +124,13 @@ class DynamicModelFactory:
         """Loads the models schema."""
 
         model = self._model.value
-        logs.debug("Loading specified model.", model=model)
+        logs.debug("Loading specified model.")
 
         logs.debug("Loading Models Schema.")
 
         model_config_file_path: str = f"{self._models_schema_path}/{model}.yaml"
         model_config_dict = file_utils.get_yaml_content(model_config_file_path)
-        logs.debug("Model Schema Loaded.", model=model, config=model_config_dict)
+        logs.debug("Model Schema Loaded.")
 
         if self._schema_config.commons:
             properties_list: list = model_config_dict.get("properties", {})
@@ -139,7 +139,7 @@ class DynamicModelFactory:
 
         model_settings = ModelSettings(**model_config_dict)
         logs.debug("Model Config Loaded", model=model_settings.name)
-        logs.debug("Model Properties Loaded", model=model_settings.properties)
+        logs.debug("Model Properties Loaded")
 
         self._model_settings = model_settings
 
@@ -261,18 +261,16 @@ class DynamicModelFactory:
 
         with duckdb.connect(ygg_db_url, read_only=False) as con:
             try:
-                logs.debug("Executing SQL statement.")
-
+                logs.debug("Executing DuckDb instructions.")
                 for instruction in duckdb_instructions:
-                    logs.debug("Executing DuckDb instruction.", instruction=instruction)
                     con.execute(instruction)
 
                 con.execute(duckdb_statement, values_list)
                 logs.debug("SQL statement executed successfully.")
 
                 if ducklake_instructions:
+                    logs.debug("Executing DuckLake instructions.")
                     for instruction in ducklake_instructions:
-                        logs.debug("Executing DuckLake instruction.", instruction=instruction)
                         con.execute(instruction)
 
                     con.execute(ducklake_merge_into)

@@ -32,7 +32,9 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
-def get_logger(logger_name: str | None = "", log_level: LogLevel = LogLevel.DEBUG) -> "Logger":
+def get_logger(
+    logger_name: str | None = "", log_level: LogLevel = LogLevel.DEBUG
+) -> "Logger":
     """Get logger with default parameters."""
     return Logger(name=logger_name, log_level=log_level)
 

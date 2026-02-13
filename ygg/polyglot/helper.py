@@ -35,7 +35,9 @@ class Helper:
                 primary_key=property_.primary_key,
                 unique_key=property_.unique,
                 check_constraint=None,
-                default_value=property_.default if property_.default and property_.default != ... else None,
+                default_value=property_.default
+                if property_.default and property_.default != ...
+                else None,
                 default_value_function=property_.physical_default_function,
             )
             list_of_columns.append(c)

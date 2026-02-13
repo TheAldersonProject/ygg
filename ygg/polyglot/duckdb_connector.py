@@ -29,7 +29,11 @@ class DuckDbConnector(QuackService):
             logs.error("Catalog name cannot be empty.")
             raise ValueError("Catalog name cannot be empty.")
 
-        super().__init__(model=model, catalog_name=catalog_name, recreate_existing_entity=recreate_existing_entity)
+        super().__init__(
+            model=model,
+            catalog_name=catalog_name,
+            recreate_existing_entity=recreate_existing_entity,
+        )
 
         logs.info(
             "Initializing Duck Lake & Db Tools module.",

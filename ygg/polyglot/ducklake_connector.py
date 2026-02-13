@@ -34,7 +34,11 @@ class DuckLakeConnector(QuackService):
             logs.error("Catalog name cannot be empty.")
             raise ValueError("Catalog name cannot be empty.")
 
-        super().__init__(model=model, catalog_name=catalog_name, recreate_existing_entity=recreate_existing_entity)
+        super().__init__(
+            model=model,
+            catalog_name=catalog_name,
+            recreate_existing_entity=recreate_existing_entity,
+        )
 
         logs.info(
             "Initializing Duck Lake & Db Tools module.",
@@ -108,8 +112,12 @@ class DuckLakeConnector(QuackService):
     def ducklake_setup_instructions(self) -> DuckLakeSetup:
         """Get the DuckLake setup instructions."""
 
-        install_modules: list[str] = " ".join(f"install {module};" for module in self.quack_modules)
-        load_modules: list[str] = " ".join(f"load {module};" for module in self.quack_modules)
+        install_modules: list[str] = " ".join(
+            f"install {module};" for module in self.quack_modules
+        )
+        load_modules: list[str] = " ".join(
+            f"load {module};" for module in self.quack_modules
+        )
 
         setup = DuckLakeSetup(
             install_modules=install_modules,
