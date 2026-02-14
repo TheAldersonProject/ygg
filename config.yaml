@@ -1,6 +1,7 @@
 ygg-config:
   environment: ${YGG_ENVIRONMENT}
   repository: ${YGG_REPOSITORY_NAME}
+  blueprints: ${YGG_BLUEPRINT_BUCKET}
   lake_alias: ${YGG_DUCKLAKE_ALIAS}
   local_cache: ${YGG_LOCAL_CACHE_FOLDER}
 

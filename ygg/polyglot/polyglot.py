@@ -11,7 +11,7 @@ from ygg.helpers.logical_data_models import (
     PolyglotEntityColumn,
     PolyglotEntityColumnDataType,
 )
-from ygg.polyglot.quack_tools import QuackConnector
+from ygg.polyglot.quack_connector import QuackConnector
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger(logger_name="Polyglot")
@@ -86,9 +86,7 @@ class Polyglot:
                 primary_key=prop.primary_key,
                 unique_key=prop.unique,
                 check_constraint=None,
-                default_value=prop.default
-                if prop.default and prop.default != ...
-                else None,
+                default_value=prop.default if prop.default and prop.default != ... else None,
                 default_value_function=prop.physical_default_function,
             )
             columns.append(entity_column)
@@ -102,9 +100,7 @@ class Polyglot:
             return polyglot_entity
 
     @staticmethod
-    def ygg_setup(
-        recreate_existing: bool = False, config: dict[str, str | Any] | None = None
-    ) -> None:
+    def ygg_setup(recreate_existing: bool = False, config: dict[str, str | Any] | None = None) -> None:
         """Build the Ygg DuckLake Setup."""
 
         models = DynamicModelFactory.models()

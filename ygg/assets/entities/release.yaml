@@ -1,0 +1,189 @@
+- name: release
+  schema_: yggdrasil
+  comment: Ygg data models release and version control
+  columns:
+    - name: version
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Version number
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: status
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: ["rc", "release", "beta", "alpha"]
+      comment: Version status
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: semantical_version
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Semantical version
+      nullable: false
+      primary_key: false
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: blueprint_config
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Blueprint configurations in base64 string format
+      nullable: false
+      primary_key: false
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: odcs_blueprint_schema
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: ODCS blueprint schema in base64 string format
+      nullable: false
+      primary_key: false
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: tag
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Release tag
+      nullable: false
+      primary_key: false
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: signature
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Release signature
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+
+    - name: build_ets
+      data_type:
+        data_type_name: integer
+        duck_db_type: bigint
+        duck_db_regex_pattern: null
+        duck_lake_type: bigint
+      enum: null
+      comment: Release signature
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: epoch_ns(get_current_timestamp())
+      skip_from_update: true
+
+- name: release_item
+  schema_: yggdrasil
+  comment: Ygg data models release and version control
+  columns:
+    - name: name
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Blueprint name
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+    - name: signature
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Blueprint signature
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+    - name: base64_content
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Blueprint content in base64 string format
+      nullable: false
+      primary_key: true
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+    - name: release_signature
+      data_type:
+        data_type_name: string
+        duck_db_type: varchar
+        duck_db_regex_pattern: null
+        duck_lake_type: varchar
+      enum: null
+      comment: Blueprint release signature
+      nullable: true
+      primary_key: false
+      unique_key: false
+      check_constraints: null
+      default_value: null
+      default_value_function: null
+      skip_from_update: true
+
+- name: deploy
+- name: artifacts

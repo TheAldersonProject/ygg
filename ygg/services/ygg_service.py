@@ -13,7 +13,7 @@ from ygg.helpers.logical_data_models import YggBaseModel
 from ygg.helpers.shared_model_mixin import SharedModelMixin
 from ygg.polyglot.ducklake_connector import DuckLakeConnector
 from ygg.polyglot.helper import Helper
-from ygg.polyglot.quack_tools import QuackConnector
+from ygg.polyglot.quack_connector import QuackConnector
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger(logger_name="YggService")

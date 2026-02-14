@@ -3,6 +3,7 @@
 import boto3
 from botocore.config import Config
 
+import ygg.utils.commons as cm
 from ygg.config import YggS3Config, YggSetup
 from ygg.utils.ygg_logs import get_logger
 
@@ -42,6 +43,21 @@ class S3Connector:
 
         except self._s3.exceptions.BucketAlreadyOwnedByYou:
             logs.info("Bucket already exists.", bucket_name=bucket_name)
+
+        except Exception as e:
+            logs.error("Error creating bucket.", error=str(e))
+            raise e
+
+    def write_to_s3(self, bucket_name: str, file_name: str, file_path: str) -> None:
+        """Write a file to S3."""
+
+        try:
+            content = cm.get_file_string_content(file_path=file_path)
+            self._s3.put_object(Bucket=bucket_name, Key=file_name, Body=content)
+
+        except Exception as e:
+            logs.error("Error writing to S3.", error=str(e))
+            raise e
 
 
 if __name__ == "__main__":

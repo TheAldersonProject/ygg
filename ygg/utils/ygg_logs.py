@@ -32,11 +32,25 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
-def get_logger(
-    logger_name: str | None = "", log_level: LogLevel = LogLevel.DEBUG
-) -> "Logger":
+def get_logger(logger_name: str | None = "", log_level: LogLevel | None = None) -> "Logger":
     """Get logger with default parameters."""
+    log_level = Level(log_level).level
     return Logger(name=logger_name, log_level=log_level)
+
+
+@singleton
+class Level:
+    """Class to manage logging levels for logging purposes."""
+
+    def __init__(self, level: LogLevel | None = None) -> None:
+        if not level:
+            level = LogLevel.INFO
+        self._level = level
+
+    @property
+    def level(self) -> LogLevel:
+        """Get the logging level."""
+        return self._level
 
 
 @singleton
@@ -64,7 +78,7 @@ class Logger:
 
     def __init__(
         self,
-        log_level: LogLevel = LogLevel.DEBUG,
+        log_level: LogLevel | None = None,
         name: str | None = None,
         logger_uuid: str | None = None,
     ) -> None:
@@ -77,6 +91,7 @@ class Logger:
         :param logger_uuid: A unique string identifier for the logger. If none is
             provided, a new UUID will be generated.
         """
+        log_level = Level().level if not log_level else log_level
         logging.basicConfig(
             format="%(message)s",
             level=log_level.value,

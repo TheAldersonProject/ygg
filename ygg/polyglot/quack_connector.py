@@ -83,5 +83,39 @@ class QuackConnector:
                     logs.debug("SQL statement executed successfully.")
 
             except Exception as e:
-                logs.error(f"Error executing SQL statement: {e}")
+                logs.error("Error executing SQL statement.", error=str(e), statement=str(statement))
                 raise e
+
+    @staticmethod
+    def create_entity(
+        model: PolyglotEntity,
+        catalog_name: str,
+        recreate_existing_entity: bool = False,
+    ) -> None:
+        """Create the entity in the catalog."""
+
+        instructions: list[str] = []
+        db_connector: QuackConnector = QuackConnector(
+            model=model,
+            catalog_name=catalog_name,
+            recreate_existing_entity=recreate_existing_entity,
+            connector_type=DuckLakeDbEntityType.DUCKDB,
+        )
+        db_connector: DuckDbConnector = db_connector.connector
+        instructions.append(db_connector.schema_ddl)
+        instructions.append(db_connector.entity_ddl)
+
+        dl_connector: QuackConnector = QuackConnector(
+            model=model,
+            catalog_name=catalog_name,
+            recreate_existing_entity=recreate_existing_entity,
+            connector_type=DuckLakeDbEntityType.DUCKLAKE,
+        )
+        dl_connector: DuckLakeConnector = dl_connector.connector
+        dl_connector.create_duck_lake_catalog()
+        for v in dl_connector.ducklake_setup_instructions().model_dump().values():
+            instructions.append(v)
+        instructions.append(dl_connector.schema_ddl)
+        instructions.append(dl_connector.entity_ddl)
+
+        QuackConnector.execute_instructions(instructions=instructions)

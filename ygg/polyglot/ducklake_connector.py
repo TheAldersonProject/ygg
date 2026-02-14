@@ -72,7 +72,7 @@ class DuckLakeConnector(QuackService):
         """Get the object storage secret."""
         storage_config = self._setup.ygg_s3_config
         object_storage_secret = f"""
-            CREATE OR REPLACE SECRET OBJECT_STORAGE_SECRET (
+            CREATE OR REPLACE PERSISTENT SECRET OBJECT_STORAGE_SECRET (
             TYPE S3,
             KEY_ID '{storage_config.aws_access_key_id}',
             SECRET '{storage_config.aws_secret_access_key}',
@@ -85,19 +85,47 @@ class DuckLakeConnector(QuackService):
         return object_storage_secret
 
     @property
+    def catalog_secret(self) -> str:
+        """Get the object storage secret."""
+
+        catalog_config = self._setup.ygg_quack_config
+        catalog_secret = f"""
+            CREATE OR REPLACE PERSISTENT SECRET CATALOG_POSTGRES (
+            TYPE postgres,
+            HOST '{catalog_config.host}',
+            PORT {catalog_config.port},
+            DATABASE {catalog_config.db_name},
+            USER '{catalog_config.user}',
+            PASSWORD '{catalog_config.password}'
+            );
+        """
+
+        catalog_secret = dedent(catalog_secret)
+        return catalog_secret
+
+    @property
+    def ducklake_secret(self) -> str:
+        """Get the object storage secret."""
+
+        ducklake_secret = """
+            CREATE OR REPLACE PERSISTENT SECRET {catalog_name}_secret (
+            TYPE ducklake,
+            METADATA_PATH 'dbname={catalog_name}',
+            DATA_PATH 's3://repository/{catalog_name}/',
+            
+        """
+        ducklake_secret = ducklake_secret.format(catalog_name=self._catalog_name)
+        ducklake_secret += """METADATA_PARAMETERS MAP {'TYPE': 'postgres', 'SECRET': 'CATALOG_POSTGRES'});"""
+
+        ducklake_secret = dedent(ducklake_secret)
+        return ducklake_secret
+
+    @property
     def attach_ducklake_catalog(self) -> str:
         """Attach the DuckLake catalog instruction."""
 
-        general_config = self._setup.ygg_config
-        catalog_database_config = self._setup.ygg_quack_config
         attach_ducklake_catalog: str = f"""
-            ATTACH 'ducklake:postgres:dbname={self._catalog_name} 
-            host={catalog_database_config.host} 
-            user={catalog_database_config.user} 
-            password={catalog_database_config.password} 
-            port={catalog_database_config.port}' 
-            AS {self._catalog_name}
-            (DATA_PATH 's3://{general_config.repository}/{self._catalog_name}/', override_data_path true);
+            ATTACH 'ducklake:{self._catalog_name}_secret' as {self._catalog_name};
         """
 
         attach_ducklake_catalog = dedent(attach_ducklake_catalog)
@@ -112,16 +140,14 @@ class DuckLakeConnector(QuackService):
     def ducklake_setup_instructions(self) -> DuckLakeSetup:
         """Get the DuckLake setup instructions."""
 
-        install_modules: list[str] = " ".join(
-            f"install {module};" for module in self.quack_modules
-        )
-        load_modules: list[str] = " ".join(
-            f"load {module};" for module in self.quack_modules
-        )
+        install_modules: list[str] = " ".join(f"install {module};" for module in self.quack_modules)
+        load_modules: list[str] = " ".join(f"load {module};" for module in self.quack_modules)
 
         setup = DuckLakeSetup(
             install_modules=install_modules,
             load_modules=load_modules,
+            catalog_secret=self.catalog_secret,
+            lake_secret=self.ducklake_secret,
             object_storage_secret=self.object_storage_secret,
             attach_ducklake_catalog=self.attach_ducklake_catalog,
         )

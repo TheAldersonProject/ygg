@@ -96,7 +96,6 @@ class DynamicModelFactory:
         version = file_utils.get_file_string_content(version_file_path)
 
         logs.debug("Models Schema Version Loaded.", version=version)
-
         return version
 
     def _load_models_configuration(self) -> None:
@@ -124,9 +123,7 @@ class DynamicModelFactory:
         """Loads the models schema."""
 
         model = self._model.value
-        logs.debug("Loading specified model.")
-
-        logs.debug("Loading Models Schema.")
+        logs.debug("Loading specified model.", model=model)
 
         model_config_file_path: str = f"{self._models_schema_path}/{model}.yaml"
         model_config_dict = file_utils.get_yaml_content(model_config_file_path)

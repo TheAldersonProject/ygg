@@ -30,6 +30,7 @@ ODCS_SCHEMA_FOLDER = ASSETS_FOLDER / "odcs_schemas"
 YGG_SCHEMAS_FOLDER = ASSETS_FOLDER / "ygg_schemas"
 
 YGG_SCHEMA_CONFIG_FILE = YGG_SCHEMAS_FOLDER / "config.yaml"
+ODCS_SCHEMA_FILE = ODCS_SCHEMA_FOLDER / "odcs-json-schema-v3.1.0.json"
 YGG_CONFIG_FILE = PROJECT_ROOT / "config.yaml"
 
 
@@ -55,9 +56,7 @@ class YggRepositoryConfiguration(YggBaseConfig):
     """Ygg Repository"""
 
     repository: str = Field(..., description="Repository name")
-    ducklake_repository_data_location: str | Path = Field(
-        ..., description="Repository location"
-    )
+    ducklake_repository_data_location: str | Path = Field(..., description="Repository location")
     ducklake_metadata_repository: DuckLakeMetadataRepository = Field(
         ...,
         description="Metadata repository technology, must be of type YggMetadataRepository",
@@ -75,9 +74,7 @@ class YggS3Config(YggBaseConfig):
     aws_access_key_id: str = Field(..., description="AWS access key id")
     aws_secret_access_key: str = Field(..., description="AWS secret access key")
     region_name: str = Field(..., description="AWS region name")
-    use_ssl: bool | None = Field(
-        default=True, description="Indicates whether to use SSL."
-    )
+    use_ssl: bool | None = Field(default=True, description="Indicates whether to use SSL.")
 
 
 class YggSinkConfig(YggBaseConfig):
@@ -85,10 +82,9 @@ class YggSinkConfig(YggBaseConfig):
 
 
 class YggGeneralConfiguration(YggBaseConfig):
-    environment: str = Field(
-        ..., description="Environment name.", examples=["dev", "prod"]
-    )
+    environment: str = Field(..., description="Environment name.", examples=["dev", "prod"])
     repository: str = Field(..., description="Repository name.")
+    blueprints: str = Field(..., description="Blueprints bucket name.")
     lake_alias: str = Field(..., description="DuckLake alias.")
     local_cache: str = Field(..., description="Local cache path.")
 
@@ -105,9 +101,7 @@ class YggQuackDatabaseConfig(YggBaseConfig):
 
 class YggDatabaseConfig(YggBaseConfig):
     database: str = Field(..., description="Database name")
-    database_extension: str = Field(
-        ..., description="Database extension, e.g. .db or .duckdb"
-    )
+    database_extension: str = Field(..., description="Database extension, e.g. .db or .duckdb")
     database_location: Path = Field(..., description="Path to the database")
     data_location: Path = Field(..., description="Path to store the data")
 
@@ -123,11 +117,7 @@ class YggDatabaseConfig(YggBaseConfig):
     def database_url(self) -> Path:
         """Get the database URL."""
 
-        database_name = (
-            f"{self.database}.{self.database_extension}"
-            if self.database_extension
-            else self.database
-        )
+        database_name = f"{self.database}.{self.database_extension}" if self.database_extension else self.database
         return self.database_location / database_name
 
 
@@ -178,17 +168,13 @@ class YggSetup:
     def ygg_repository_config(self) -> YggRepositoryConfiguration:
         """Get the Ygg Repository Config."""
 
-        return YggRepositoryConfiguration(
-            **self._config.get("ygg-repository-config", {})
-        )
+        return YggRepositoryConfiguration(**self._config.get("ygg-repository-config", {}))
 
     @property
     def ygg_quack_config(self) -> YggQuackDatabaseConfig:
         """Get the Ygg Quack Config."""
 
-        return YggQuackDatabaseConfig(
-            **self._config.get("ygg-quack-database-config", {})
-        )
+        return YggQuackDatabaseConfig(**self._config.get("ygg-quack-database-config", {}))
 
     @property
     def ygg_config(self) -> YggRepositoryConfiguration:
@@ -207,9 +193,7 @@ class YggSetup:
         ygg_database_config = self._config.get("ygg-database-config", {})
 
         if not ygg_database_config:
-            raise ValueError(
-                "Ygg Database Config not found. Please check the config.yaml file."
-            )
+            raise ValueError("Ygg Database Config not found. Please check the config.yaml file.")
 
         db_config = YggDatabaseConfig(**ygg_database_config)
         if self._create_ygg_folders:
@@ -221,13 +205,9 @@ class YggSetup:
     def ygg_catalog_database_config(self) -> YggCatalogDatabaseConfig:
         """Get the Ygg Catalog Database Config."""
 
-        ygg_database_config = self._config.get(
-            "ygg-metadata-catalog-database-config", {}
-        )
+        ygg_database_config = self._config.get("ygg-metadata-catalog-database-config", {})
         if not ygg_database_config:
-            raise ValueError(
-                "Ygg Catalog Database Config not found. Please check the config.yaml file."
-            )
+            raise ValueError("Ygg Catalog Database Config not found. Please check the config.yaml file.")
 
         db_config = YggCatalogDatabaseConfig(**ygg_database_config)
         return db_config
@@ -238,9 +218,7 @@ class YggSetup:
         ygg_sink_config = self._config.get("ygg-sink-config", {})
 
         if not ygg_sink_config:
-            raise ValueError(
-                "Ygg Sink Config not found. Please check the config.yaml file."
-            )
+            raise ValueError("Ygg Sink Config not found. Please check the config.yaml file.")
 
         sink_config = YggSinkConfig(**ygg_sink_config)
         if self._create_ygg_folders:

@@ -1,5 +1,7 @@
 """Local files utilities."""
 
+import base64
+import hashlib
 import json
 import os
 import re
@@ -33,9 +35,7 @@ def get_yaml_content(file_path: str) -> dict:
 
 def get_yaml_from_json_content(json_content: dict) -> str:
     """Converts a JSON content to YAML format."""
-    return yaml.dump(
-        json.loads(json_content), sort_keys=False, default_flow_style=False, indent=4
-    )
+    return yaml.dump(json.loads(json_content), sort_keys=False, default_flow_style=False, indent=4)
 
 
 def save_yaml_content(file_path: str, content: dict) -> None:
@@ -74,3 +74,39 @@ def replace_placeholders_with_env_values(config) -> dict[str, str | Any]:
     replace_dict(config)
 
     return config
+
+
+def get_json_signature(data: dict, algorithm: str = "sha256") -> str:
+    """Generates a sha256 signature for a JSON object."""
+
+    canonical_json = json.dumps(data, sort_keys=True, indent=None, separators=(",", ":"))
+    hasher = hashlib.new(algorithm)
+    hasher.update(canonical_json.encode("utf-8"))
+
+    return hasher.hexdigest()
+
+
+def pack_json_content_as_base64(content: dict) -> str:
+    return base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8")
+
+
+def transform_html_to_markdown(html: str) -> str:
+    """Transform HTML to Markdown."""
+    if not isinstance(html, str):
+        return html
+
+    # convertion = convert(html)
+    convertion = html
+    return convertion or ""
+
+
+def camel_to_snake(name: str) -> str:
+    """
+    Converts a camelCase string to a snake_case string.
+
+    Handles acronyms and leading capitals correctly.
+    """
+    name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
+    name = re.sub(r"([a-z\d])([A-Z])", r"\1_\2", name)
+
+    return name.lower()
