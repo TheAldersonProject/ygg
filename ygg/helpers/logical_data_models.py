@@ -167,6 +167,7 @@ class PolyglotEntityColumn(YggBaseModel):
     """Polyglot Db Entity Column"""
 
     name: str = Field(..., description="Column name")
+    alias: str = Field(..., description="Column name alias")
     data_type: PolyglotEntityColumnDataType = Field(..., description="Column data type")
     enum: list | None = Field(default=None)
     comment: str | None = Field(default=None, description="Column comment")

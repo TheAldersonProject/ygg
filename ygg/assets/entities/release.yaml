@@ -184,6 +184,3 @@
       default_value: null
       default_value_function: null
       skip_from_update: true
-
-- name: deploy
-- name: artifacts
