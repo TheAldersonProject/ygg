@@ -89,14 +89,17 @@ if __name__ == "__main__":
     from ygg.helpers.enums import Model
     from ygg.utils.commons import get_json_file_content, get_yaml_content
 
-    additional_config = get_yaml_content("/home/thiago/projects/ygg/ygg/assets/ygg_schemas/config.yaml")
+    config_data = get_yaml_content("/home/thiago/projects/ygg-data-contracts/config/config.yaml")
+    c = YggSetup(config_data=config_data)
+
+    additional_config = get_yaml_content("/home/thiago/projects/ygg-data-contracts/ygg-schemas/0_1_0/config.yaml")
     dyna = DataContractLoader(
         model=Model.CONTRACT,
         data_contract_schema_config=additional_config,
         odcs_schema_reference=get_json_file_content(
-            "/home/thiago/projects/ygg/ygg/assets/odcs_schemas/odcs-json-schema-v3.1.0.json"
+            "/home/thiago/projects/ygg-data-contracts/odcs-schemas/odcs-json-schema-v3.1.0.json"
         ),
-        data_contract_schema=get_yaml_content("/home/thiago/projects/ygg/ygg/assets/ygg_schemas/schema.yaml"),
+        data_contract_schema=get_yaml_content("/home/thiago/projects/ygg-data-contracts/ygg-schemas/0_1_0/schema.yaml"),
     )
 
     entity_ = dyna.polyglot_entity
