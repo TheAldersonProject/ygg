@@ -4,13 +4,13 @@ from ygg.helpers.enums import DuckLakeDbEntityType
 from ygg.helpers.logical_data_models import (
     PolyglotEntity,
 )
-from ygg.polyglot.quack_service import QuackService
+from ygg.polyglot.quack_meta_class import QuackMetaClass
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger(logger_name="DuckDbConnector")
 
 
-class DuckDbConnector(QuackService):
+class DuckDbConnector(QuackMetaClass):
     """DuckLake Db Tools"""
 
     def __init__(

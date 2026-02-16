@@ -16,6 +16,7 @@ class PostgresConnector:
         """Postgres Connector"""
 
         if not polyglot_db_config:
+            logs.error("Polyglot Database Config must be provided.")
             raise ValueError("Polyglot Database Config must be provided.")
 
         self._db_config = polyglot_db_config

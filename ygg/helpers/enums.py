@@ -17,9 +17,3 @@ class DuckLakeDbEntityType(Enum):
 
     DUCKDB = "duckdb"
     DUCKLAKE = "ducklake"
-
-
-class PolyglotTargetType(Enum):
-    """Target Types"""
-
-    QUACK = "quack"

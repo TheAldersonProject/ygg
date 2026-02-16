@@ -8,7 +8,7 @@ import duckdb
 from dotenv import load_dotenv
 from pydantic import Field, model_validator
 
-from ygg.core.dynamic_odcs_models_factory import YggBaseModel
+from ygg.core.data_contract_loader import YggBaseModel
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger()
@@ -30,12 +30,7 @@ class WebScrapedContentDocument(YggBaseModel):
     @model_validator(mode="after")
     def validate_and_overwrite_deterministically(self):
         self.url = self.url.strip()
-        unique_string = (
-            self.url.replace("://", "/")
-            .replace("//", "/")
-            .replace(".", "/")
-            .replace(":", "/")
-        )
+        unique_string = self.url.replace("://", "/").replace("//", "/").replace(".", "/").replace(":", "/")
         generated_id = uuid5(NAMESPACE_DNS, unique_string)
 
         self.tags = [t.lower().rstrip().lstrip() for t in self.tags]
@@ -56,9 +51,7 @@ class WebScrapedContentDocument(YggBaseModel):
         return WebScrapedContentDocument._acquire_from_url(url)
 
     @staticmethod
-    def _acquire_from_url(
-        url: str, force_reload: bool = False
-    ) -> "WebScrapedContentDocument":
+    def _acquire_from_url(url: str, force_reload: bool = False) -> "WebScrapedContentDocument":
         """Loads online documents from a URL."""
 
         load_dotenv()
@@ -88,9 +81,7 @@ class WebScrapedContentDocument(YggBaseModel):
                 with duckdb.connect(":memory:", read_only=False) as conn:
                     ddb_path = f"{scraped_docs_db_path}/*.parquet"
                     # ddb = conn.read_parquet(ddb_path)
-                    data_ = duckdb.sql(
-                        f"select * from '{ddb_path}' where url = '{url}'"
-                    )
+                    data_ = duckdb.sql(f"select * from '{ddb_path}' where url = '{url}'")
                     data_ = data_.fetchdf()
                     data_ = data_.to_dict(orient="records")
 
@@ -181,7 +172,5 @@ if __name__ == "__main__":
     #     if "urls" in content:
     #         for url in content.get("urls", []):
     #             RawDocument.acquire_from_url(url)
-    r = WebScrapedContentDocument.load_from_url(
-        "https://docs.snowflake.com/en/user-guide/cost-understanding-compute"
-    )
+    r = WebScrapedContentDocument.load_from_url("https://docs.snowflake.com/en/user-guide/cost-understanding-compute")
     print(r)

@@ -7,7 +7,7 @@ import duckdb
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from ygg.core.dynamic_odcs_models_factory import YggBaseModel
+from ygg.core.data_contract_loader import YggBaseModel
 
 base_url = "https://docs.snowflake.com/en/sql-reference"
 
@@ -66,9 +66,7 @@ class TableColumn(BaseModel):
         default=False,
         description="Whether the column is or not a date or timestamp, if not sure, set false.",
     )
-    dateOrTimestampType: (
-        Literal["date", "timestamp", "timestamp_ntz", "timestamp_ltz"] | None
-    ) = Field(
+    dateOrTimestampType: Literal["date", "timestamp", "timestamp_ntz", "timestamp_ltz"] | None = Field(
         default=None,
         description="Date or timestamp type if the column is a date or timestamp.",
     )
@@ -76,9 +74,7 @@ class TableColumn(BaseModel):
         default=False,
         description="Whether the column is or not a date or timestamp to be used for start point for pagination.",
     )
-    examples: list[str] | None = Field(
-        default_factory=list, description="List of examples, maximum of 5."
-    )
+    examples: list[str] | None = Field(default_factory=list, description="List of examples, maximum of 5.")
 
 
 class Table(BaseModel):
@@ -149,15 +145,9 @@ def extract_fundamentals_info_from_sf_web_page(md: str):
     class ContractFundamentalsLinks(YggBaseModel):
         """Contract Fundamentals Links."""
 
-        url: str | None = Field(
-            default=None, description="Relevant identified links in the document."
-        )
-        type: str | None = Field(
-            default=None, description="Type of the identified link."
-        )
-        description: str | None = Field(
-            default=None, description="Description of the identified link."
-        )
+        url: str | None = Field(default=None, description="Relevant identified links in the document.")
+        type: str | None = Field(default=None, description="Type of the identified link.")
+        description: str | None = Field(default=None, description="Description of the identified link.")
 
     class ContractFundamentals(YggBaseModel):
         """Contract Fundamentals."""
@@ -171,19 +161,11 @@ def extract_fundamentals_info_from_sf_web_page(md: str):
             description="Type of the analyzed document.",
             examples=["Canonical", "Jira Ticket", "Request for Comments"],
         )
-        tags: list[str] | None = Field(
-            default_factory=list, description="List of relevant tags."
-        )
+        tags: list[str] | None = Field(default_factory=list, description="List of relevant tags.")
 
-        purpose: str | None = Field(
-            default=None, description="Purpose of the analyzed document."
-        )
-        limitations: str | None = Field(
-            default=None, description="Limitations identified within the document."
-        )
-        usage: str | None = Field(
-            default=None, description="Usage of the analyzed document."
-        )
+        purpose: str | None = Field(default=None, description="Purpose of the analyzed document.")
+        limitations: str | None = Field(default=None, description="Limitations identified within the document.")
+        usage: str | None = Field(default=None, description="Usage of the analyzed document.")
 
         identified_links: list[ContractFundamentalsLinks] = Field(
             default_factory=list, description="Identified links within the document."
@@ -272,7 +254,9 @@ def build_samples():
                     with open(f_name, "w") as f:
                         f.write(md_sample)
 
-                    f_name = f"/Users/thiagodias/Tad/projects/tyr/ygg/data/sample/report/sample-summary/{fd}/{file.stem}.md"
+                    f_name = (
+                        f"/Users/thiagodias/Tad/projects/tyr/ygg/data/sample/report/sample-summary/{fd}/{file.stem}.md"
+                    )
                     with open(f_name, "w") as f:
                         f.write(md_sample_summary)
 
@@ -297,29 +281,21 @@ def summarize_reports():
 
         return all_files
 
-    files = get_all_files_recursive(
-        "/Users/thiagodias/Tad/projects/tyr/ygg/data/sample/report"
-    )
+    files = get_all_files_recursive("/Users/thiagodias/Tad/projects/tyr/ygg/data/sample/report")
     for f in files:
         md = f.read_text()
 
         class ReportSummary(YggBaseModel):
             """Contract Fundamentals Links."""
 
-            title: str = Field(
-                default_factory=str, description="Define a title for the report."
-            )
+            title: str = Field(default_factory=str, description="Define a title for the report.")
             summary: str = Field(
                 default_factory=str,
                 description="Summarize the report with all relevant information.",
             )
-            tags: list[str] | None = Field(
-                default=None, description="Relevant tags for the report."
-            )
+            tags: list[str] | None = Field(default=None, description="Relevant tags for the report.")
 
-            table_name: str | None = Field(
-                default=None, description="Table name if the report is about a table."
-            )
+            table_name: str | None = Field(default=None, description="Table name if the report is about a table.")
             table_schema_name: str | None = Field(
                 default=None,
                 description="Table schema name if the report is about a table.",
@@ -336,10 +312,7 @@ def summarize_reports():
 
         new_file = str(f).split("/")
         new_file = new_file[len(new_file) - 3 :]
-        new_file = (
-            "/Users/thiagodias/Tad/projects/tyr/ygg/data/sample/report/json-extractions/"
-            + "/".join(new_file)
-        )
+        new_file = "/Users/thiagodias/Tad/projects/tyr/ygg/data/sample/report/json-extractions/" + "/".join(new_file)
         Path(new_file).parent.mkdir(parents=True, exist_ok=True)
         new_file = new_file.replace(".md", ".json")
 

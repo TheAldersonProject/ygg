@@ -9,13 +9,13 @@ from ygg.helpers.logical_data_models import (
     PolyglotEntity,
 )
 from ygg.polyglot.postgres_db_tools import PostgresConnector
-from ygg.polyglot.quack_service import QuackService
+from ygg.polyglot.quack_meta_class import QuackMetaClass
 from ygg.utils.ygg_logs import get_logger
 
 logs = get_logger(logger_name="DuckLakeConnector")
 
 
-class DuckLakeConnector(QuackService):
+class DuckLakeConnector(QuackMetaClass):
     """DuckLake Tools"""
 
     def __init__(
@@ -112,10 +112,9 @@ class DuckLakeConnector(QuackService):
             TYPE ducklake,
             METADATA_PATH 'dbname={catalog_name}',
             DATA_PATH 's3://repository/{catalog_name}/',
-            
         """
         ducklake_secret = ducklake_secret.format(catalog_name=self._catalog_name)
-        ducklake_secret += """METADATA_PARAMETERS MAP {'TYPE': 'postgres', 'SECRET': 'CATALOG_POSTGRES'});"""
+        ducklake_secret += "METADATA_PARAMETERS MAP {'TYPE': 'postgres', 'SECRET': 'CATALOG_POSTGRES'});"
 
         ducklake_secret = dedent(ducklake_secret)
         return ducklake_secret

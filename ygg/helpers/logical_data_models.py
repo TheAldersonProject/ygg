@@ -1,7 +1,7 @@
 """Ygg Models."""
 
 from pathlib import Path
-from typing import Any, Literal, Type
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -57,91 +57,6 @@ class ModelSettings(YggBaseModel):
     properties: list[ModelProperty]
 
 
-class YggModelProperty(YggBaseModel):
-    """Ygg model properties."""
-
-    name: str
-    type: str
-    alias: str
-    skip_from_signature: bool = Field(default=False)
-    skip_from_physical_model: bool = Field(default=False)
-    required: bool | None = Field(default=True)
-    primary_key: bool | None = Field(default=False)
-    primary_key_position: int | None = Field(default=None)
-    unique: bool | None = Field(default=False)
-    pattern: str | None = Field(default=None)
-    odcs_schema: str | None = Field(default=None)
-    enum: list[Any] | None = Field(default=None)
-    properties: Any | None = Field(default=None)
-    items: Any | None = Field(default=None)
-    default: Any | None = Field(default=None)
-    physical_default_function: Any | None = Field(default=None)
-    description: str | None = Field(default=None)
-    examples: list[Any] | None = Field(default=None)
-
-
-class YggModelConfig(YggBaseModel):
-    """Ygg model properties."""
-
-    document_path: str | None = Field(default=None)
-    type: str
-    required: bool | None = Field(default=True)
-    entity_name: str
-    entity_type: Literal["table", "view"]
-    entity_schema: str
-    description: str
-    odcs_reference: str
-
-
-class YggModel(YggBaseModel):
-    """Ygg model."""
-
-    name: str
-    version: str
-    config: YggModelConfig
-    properties: list[YggModelProperty]
-    instance: Type[YggBaseModel] | None = Field(default=None)
-
-
-class TargetContractSchemaPropertyMap(YggBaseModel):
-    """Map for the factory for creating target contract schema properties."""
-
-    id: str = Field(..., description="Unique identifier for the target contract schema property")
-    record_hash: str = Field(..., description="Hash of the target contract schema property record")
-    name: str = Field(..., description="Name of the target contract schema property")
-    description: str = Field(..., description="Description of the target contract schema property")
-    physical_type: str = Field(..., description="Physical type of the target contract schema property")
-    is_key: bool = Field(..., description="Whether the target contract schema property is a key")
-    is_unique: bool = Field(..., description="Whether the target contract schema property is unique")
-    is_required: bool = Field(..., description="Whether the target contract schema property is required")
-
-
-class TargetContractSchemaMap(YggBaseModel):
-    """Map for the factory for creating target contract schemas."""
-
-    id: str = Field(..., description="Unique identifier for the target contract schema")
-    record_hash: str = Field(..., description="Hash of the target contract schema record")
-    entity: str = Field(..., description="Entity name of the target contract schema")
-    physical_type: str = Field(..., description="Physical type of the target contract schema")
-    contract_id: str = Field(..., description="ID of the target contract")
-    contract_record_hash: str = Field(..., description="Hash of the target contract record")
-    create_infrastructure_ddl: str | None = Field(default=None, description="DDL to create the target contract schema")
-    properties: list[TargetContractSchemaPropertyMap] = Field(
-        ..., description="List of target contract schema properties"
-    )
-
-
-class TargetContractMap(YggBaseModel):
-    """Map for the factory for creating target contracts."""
-
-    id: str = Field(..., description="Unique identifier for the target contract")
-    record_hash: str = Field(..., description="Hash of the target contract record")
-    version: str = Field(..., description="Version of the target contract")
-    catalog: str = Field(..., description="URL to the target contract catalog")
-    catalog_schema: str = Field(..., description="Schema of the target contract")
-    schemas: list[TargetContractSchemaMap] = Field(..., description="List of target contract schemas")
-
-
 class PolyglotDatabaseConfig(YggBaseModel):
     """Polyglot Database Config"""
 
@@ -159,8 +74,8 @@ class PolyglotEntityColumnDataType(YggBaseModel):
 
     data_type_name: str = Field(..., description="Column data type")
     duck_db_type: str = Field(..., description="DuckDb data type")
-    duck_db_regex_pattern: str | None = Field(default=None, description="DuckDb regex pattern")
     duck_lake_type: str = Field(..., description="DuckLake data type")
+    regex_pattern: str | None = Field(default=None, description="Regex pattern")
 
 
 class PolyglotEntityColumn(YggBaseModel):
@@ -178,14 +93,23 @@ class PolyglotEntityColumn(YggBaseModel):
     skip_from_update: bool | None = Field(default=False, description="Whether to skip the column from update")
     default_value: str | Any | None = Field(default=None, description="Default value")
     default_value_function: str | None = Field(default=None, description="Database function for default value")
+    examples: list[Any] | None = Field(default=None)
+
+    skip_from_signature: bool | None = Field(default=False, description="Whether to skip the column from signature")
+    skip_from_physical_model: bool | None = Field(
+        default=False, description="Whether to skip the column from physical model"
+    )
 
 
 class PolyglotEntity(YggBaseModel):
     """Polyglot Db Entity"""
 
     name: str = Field(..., description="Entity name")
+    catalog: str = Field(..., description="Entity catalog name")
     schema_: str = Field(..., description="Entity schema name")
     comment: str | None = Field(default=None, description="Entity comment")
+    update_allowed: bool | None = Field(default=True, description="Whether the entity can be updated")
+    delete_allowed: bool | None = Field(default=True, description="Whether the entity can be deleted")
     columns: list[PolyglotEntityColumn] | None = Field(default=None, description="Entity list of columns")
 
 

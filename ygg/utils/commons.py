@@ -53,14 +53,12 @@ def replace_placeholders_with_env_values(config) -> dict[str, str | Any]:
 
     def replace_match(match):
         """Replace a match with the corresponding environment variable value."""
-        # Extract the variable name and default value if any
         var = match.group(1)
         if ":-" in var:
             var_name, default = var.split(":-", 1)
         else:
             var_name, default = var, None
 
-        # Get the environment variable value or use the default
         return os.getenv(var_name, default)
 
     def replace_dict(d) -> None:
