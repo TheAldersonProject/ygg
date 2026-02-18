@@ -1,1 +1,0 @@
-"""Ygg Core Module."""

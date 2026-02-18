@@ -6,17 +6,15 @@ import uuid
 from enum import Enum
 from typing import Any, Self
 
+from midgard.file_utils import JsonFileTools
+from midgard.logs import Logger
+from midgard.shared_model_mixin import SharedModelMixin
 from pydantic import Field
 
-from ygg.core.shared_model_mixin import SharedModelMixin
-from ygg.helpers.enums import Model
-from ygg.helpers.logical_data_models import (
-    PolyglotEntity,
-    YggBaseModel,
-)
-from ygg.utils.ygg_logs import get_logger
+from ygg.data_models import YggBaseModel
+from ygg.enums import Model
 
-logs = get_logger(logger_name="YggRelease")
+logs = Logger.get_logger(logger_name="YggRelease")
 
 
 class VersionStatus(Enum):
@@ -142,9 +140,9 @@ class Release:
             logs.error("Blueprint config must be informed.")
             raise ValueError("Blueprint config must be informed.")
 
-        content_signature = cm.get_json_signature(content)
+        content_signature = JsonFileTools.json_to_sha256(data=content)
         content: ReleaseItem = ReleaseItem(
-            name=blueprint_name.value, content=cm.pack_json_content_as_base64(content), signature=content_signature
+            name=blueprint_name.value, content=JsonFileTools.json_to_base64(content), signature=content_signature
         )
         if not self._blueprint_content:
             self._blueprint_content = []
@@ -175,11 +173,11 @@ class Release:
     def build(self) -> Self:
         """Build the release object."""
 
-        blueprint_config_base64 = cm.pack_json_content_as_base64(self._blueprint_config)
+        blueprint_config_base64 = JsonFileTools.json_to_base64(self._blueprint_config)
         blueprint_config_base64_hash = hashlib.md5(blueprint_config_base64.encode()).hexdigest()
         blueprint_config_base64_hash = str(blueprint_config_base64_hash)
 
-        odcs_schema_base_64 = cm.pack_json_content_as_base64(self._odcs_blueprint_schema)
+        odcs_schema_base_64 = JsonFileTools.json_to_base64(self._odcs_blueprint_schema)
         odcs_schema_base_64_hash = hashlib.md5(odcs_schema_base_64.encode()).hexdigest()
         odcs_schema_base_64_hash = str(odcs_schema_base_64_hash)
 
@@ -222,18 +220,20 @@ class Release:
         logs.info("Setting up Release.")
 
         for e in release_entities_spec:
-            model = PolyglotEntity(**e)
+            # model = PolyglotEntity(**e)
             # create_entity(model=model, catalog_name=catalog_name, recreate_existing_entity=False)
 
-            logs.info("Setting completed for model.", model=model.name, schema=model.schema_, catalog=catalog_name)
+            # logs.info("Setting completed for model.", model=model.name, schema=model.schema_, catalog=catalog_name)
+            ...
 
 
 if __name__ == "__main__":
-    import ygg.utils.commons as cm
     # import ygg.config as yc
 
-    release_spec = cm.get_yaml_content("/ygg/assets/entities/release.yaml")
-    Release.setup(catalog_name="ygg", release_entities_spec=release_spec)
+    release_spec = JsonFileTools.yaml_to_json("/home/thiago/projects/.ygg/local-dev/contract.yaml")
+    # Release.setup(catalog_name="ygg", release_entities_spec=release_spec)
+
+    print(release_spec)
 
     # odcs_schema = cm.get_file_string_content(yc.ODCS_SCHEMA_FILE)
     # ygg_config = cm.get_yaml_content(yc.YGG_SCHEMA_CONFIG_FILE)

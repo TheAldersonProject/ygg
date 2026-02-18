@@ -2,11 +2,9 @@ import argparse
 import os
 
 from dotenv import load_dotenv
+from midgard.logs import Logger
 
-from ygg.services.ygg_service import YggService
-from ygg.utils.ygg_logs import get_logger
-
-logs = get_logger(logger_name="YggCli")
+logs = Logger.get_logger(logger_name="YggCli")
 
 load_dotenv()
 
@@ -30,17 +28,19 @@ def main():
 
     if args.setup:
         logs.info("Setting up Ygg DuckLake")
-        YggService.setup()
+        # YggService.setup()
 
     if contracts_input_folder and args.file:
         contracts_input_folder = contracts_input_folder + "/"
         contract_data_path = contracts_input_folder + args.file
 
         if args.register_contract:
-            YggService.register_data_contract(contract_data=contract_data_path, insert_on_conflict_ignore=True)
+            ...
+            # YggService.register_data_contract(contract_data=contract_data_path, insert_on_conflict_ignore=True)
 
     if args.build:
-        YggService.build_contract(contract_data=contract_data_path)
+        ...
+        # YggService.build_contract(contract_data=contract_data_path)
 
 
 if __name__ == "__main__":
